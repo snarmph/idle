@@ -1,0 +1,35 @@
+name: Publish Page
+run-name: ${{ github.actor }} is publishing changes to github pages
+on: [push]
+permissions:
+  contents: write
+jobs:
+  publish-page:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "The job was automatically triggered by a ${{ github.event_name }} event"
+      - name: Check out dev branch
+        uses: actions/checkout@v4
+        with:
+          ref: dev
+      - run: echo "The ${{ github.repository }} repo has been cloned to the runner"
+      - name: copy files to temporary dir
+        run: |
+          mkdir temp_dir
+          cp -r src/* temp_dir/
+      - run: echo "copied files to temporary dir"
+      - name: Checkout master branch
+        uses: actions/checkout@v4
+        with:
+          ref: master
+      - name: Copy files from temporary directory to master
+        run: |
+          cp -r temp_dir/* .
+          rm -rf temp_dir
+      - name: commit and push changes to master
+        run: |
+          git config --global user.email "snarmph@gmail.com"
+          git config --global user.name "snarmph"
+          git add .
+          git commit -m "Publish page from dev branch"
+          git push origin master
