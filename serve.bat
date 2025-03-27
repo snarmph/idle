@@ -1,0 +1,1 @@
+build\nob -w all -werror -g -run reloader\main.c src
