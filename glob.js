@@ -1,5 +1,5 @@
-import { Item, Resource } from "./ui.js";
-import { makeVisible, isElementVisible } from "./utils.js";
+import { Item, Resource } from "./ui-old.js";
+import { makeVisible, isElementVisible } from "./script/utils.js";
 import { Resources, Items, Npcs, MessageTypes } from "./enums.js";
 import { sendMessage } from "./messages.js";
 

@@ -101,6 +101,7 @@ class Game {
             if (this.conditions[i].unlocked()) {
                 this.conditions[i] = this.conditions[this.conditions.length - 1];
                 this.conditions.pop();
+                --i;
             }
         }
     }

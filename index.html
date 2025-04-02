@@ -1,212 +1,53 @@
 <!DOCTYPE html>
 <html>
     <head>
+        <link rel="stylesheet" href="style/common.css"/>
+        <link rel="stylesheet" href="style/tabs.css"/>
+        <!-- <link rel="stylesheet" href="style/inventory.css"/> -->
+        <!-- <link rel="stylesheet" href="style/cave.css"/> -->
+        <link rel="stylesheet" href="style/tabs/idle-tab.css"/>
+        <link rel="stylesheet" href="style/tabs/garden-tab.css"/>
         <style>
-            html, body {
-                margin: 0;
-                padding: 0;
-                width: 100%;
-                height: 100%;
-                --main-col: #dedcd6;
-                --background-col: #191919;
-                --disabled-col: #444444;
-                --tooltip-bg-col: #212124;
-                --tooltip-shadow-col: #0e0e0e;
-                --border: 1px solid var(--main-col);
-
-                font-family: monospace;
-                
-                color: var(--main-col);
-                background-color: var(--background-col);
-            }
-            .main-container {
-                display: flex;
-                justify-content: center;
-                width: 100%;
-                height: 100%;
-            }
-            .main-content {
-                border-top: 0;
-                border-bottom: 0;
-                max-width: 1000px;
-                width: 100%;
-                height: 100%;
-                padding: 40px;
-            }
-            .content {
-                display: flex;
-                width: 100%;
-                height: 100%;
-                position: relative;
-                justify-content: space-between;
-            }
-            #inventory {
-                display: flex;
-                flex-direction: column;
-                gap: 20px
-            }
-            .inventory-category {
-                display: flex;
-                flex-direction: column;
-                justify-content: flex-start;
-                position: relative;
-                width: 200px;
-                border: var(--border);
-                padding: 20px;
-            }
-            .inventory-category::before {
-                background-color: var(--background-col);
-                position: absolute;
-                content: attr(data-legend);
-                font-size: 1.1em;
-                left: 0.8em;
-                top: -0.8em;
-            }
-            .inventory-item {
-                position: relative;
-                display: flex;
-                justify-content: space-between;
-            }
-
-            .inventory-item {
-                margin-top: 10px;
-            }
-
-            .inventory-item:first-child {
-                margin-top: 0;
-            }
-
-            #buttons, #build {
-                display: flex;
-                flex-direction: column;
-                justify-content: flex-start;
-                gap: 10px;
-            }
-
-            .button-inner {
-                position: relative;
-                padding: 8px 10px;
-                z-index: 0;
-            }
-
-            .button {
-                position: relative;
-                border: var(--border);
-                width: 100px;
-                text-align: center;
-                cursor: pointer;
-                user-select: none;
-            }
-            .button:hover {
-                text-decoration: underline;
-            }
-            .disabled {
-                border-color: var(--disabled-col);
-                color: var(--disabled-col);
-            }
-            .disabled:hover {
-                cursor: default;
-                text-decoration: none;
-            }
-            .cooldown {
-                background-color: var(--main-col);
-                position: absolute;
-                top: 0;
-                left: 0;
-                height: 100%;
-                z-index: -1;
-            }
-
-            .text-item {
-                position: relative;
-            }
-
-            #reset-button {
-                position: fixed;
-                top: 10px;
-                left: 10px;
-                background-color: var(--background-col);
-                opacity: 0.5;
-                padding: 5px 10px;
-                z-index: 999;
-            }
-
-            #reset-button:hover {
-                opacity: 1;
-            }
-
-            .text-item {
-                position: relative;
-            }
-
-            div[tooltip]::after {
-                pointer-events: none;
-                position: absolute;
-
-                padding: 10px 10px;
-                max-width: 80px;
-                width: 90%;
-                z-index: 999;
-                text-align: center;
-                opacity: 0;
-
-                content: attr(tooltip);
-                white-space: pre-wrap;
-                background-color: var(--tooltip-bg-col);
-                box-shadow: 0px 5px 8px var(--tooltip-shadow-col);
-
-                border-radius: 5px;
-            }
-
-            div[tooltip]:hover::after {
-                opacity: 1;
-            }
-
-            .button[tooltip]::after {
-                transform: translate(-50%, 5px);
-            }
-
-            .inventory-item[tooltip]::after {
-                position: absolute;
-                max-width: 100%;
-                top: calc(50% + 10px);
-            }
-
-            
             .hidden {
                 display: none;
             }
-
         </style>
-        <script type="module" src="game.js"></script>
-        <script type="module" src="ui.js"></script>
+
+        <script type="importmap">
+            {
+                "imports": {
+                    "script/": "./script/"
+                }
+            }
+        </script>
+
+        <script type="module" src="script/main.js"></script>
         <script type="module" src="websockets.js"></script>
+        <script src="debug.js"></script>
     </head>
     <body>
-        <div id="reset-button" class="button reset-button">Reset</div>
-        <div class="main-container">
-            <div class="main-content">
-                <div class="content">
-                    <div id="text">
-                        <div class="text-item" tooltip="hello&#xa;world" > > Hello World!</div>
-                        <div class="text-item"> > Hello World2 </div>
-                        <div class="text-item"> > Hello World 3! </div>
-                    </div>
-                    <div id="buttons"></div>
-                    <div id="build"></div>
-                    <div id="inventory">
-                        <div id="resources" class="inventory-category hidden" data-legend="resources"></div>
-                        <div id="items" class="inventory-category hidden" data-legend="items"></div>
-                        <div id="npcs" class="inventory-category hidden" data-legend="villagers"></div>
-                    </div>
+        <!-- https://stackoverflow.com/questions/21147149/flash-of-unstyled-content-fouc-in-firefox-only-is-ff-slow-renderer -->
+        <script>0</script>
+
+        <div class="content-container">
+            <div class="left-bar">
+                <div class="boxed extra-outer hidden">
+                    <div id="extra" class="extra-inner"></div>
                 </div>
+                <div class="category log-outer" data_legend="Log">
+                    <div id="log" class="log-inner"></div>
+                </div>
+            </div>
+            <div class="content">
+                <div class="tabs" id="tab-header">
+                    <div id="tab-filler"></div>
+                </div>
+                <div class="tab-content" id="main-content"></div>
             </div>
         </div>
 
         <script>
-            function reset() {
-                localStorage.clear();
-            }
+            let debug = {};
         </script>
     </body>
 </html>

@@ -1,0 +1,17 @@
+.garden-tile-button {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    width: 100px;
+    height: 100px;
+}
+
+.garden-tile-button .button-inner {
+    position: static;
+    padding: 0;
+}
+
+.garden-tile-button[tooltip]::after {
+    transform: translate(0px, 5px);
+    top: 100%;
+}
