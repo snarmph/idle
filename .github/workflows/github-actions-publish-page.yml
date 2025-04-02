@@ -13,7 +13,7 @@ jobs:
           ref: dev
       - name: Copy files to temporary dir
         run: |
-          cp -r src/* ${{ runner.temp }}/
+          cp -r page/* ${{ runner.temp }}/
       - name: Checkout master branch
         uses: actions/checkout@v4
         with:

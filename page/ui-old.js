@@ -1,8 +1,7 @@
-import { isElementVisible, lerp, makeInvisible } from "./utils.js"
+import { isElementVisible, lerp, makeVisible, makeInvisible } from "./script/utils.js"
 import { addListener, removeListener, } from "./messages.js";
 import { Resources, Items, MessageTypes } from "./enums.js";
 import { Condition, ResourceCondition, glob } from "./glob.js";
-import { makeVisible } from "./utils.js";
 
 const timeMult = .10;
 

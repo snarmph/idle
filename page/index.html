@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <link rel="stylesheet" href="style/common.css"/>
+        <link rel="stylesheet" href="style/tabs.css"/>
+        <!-- <link rel="stylesheet" href="style/inventory.css"/> -->
+        <!-- <link rel="stylesheet" href="style/cave.css"/> -->
+        <link rel="stylesheet" href="style/tabs/idle-tab.css"/>
+        <link rel="stylesheet" href="style/tabs/garden-tab.css"/>
+        <style>
+            .hidden {
+                display: none;
+            }
+        </style>
+
+        <script type="importmap">
+            {
+                "imports": {
+                    "script/": "./script/"
+                }
+            }
+        </script>
+
+        <script type="module" src="script/main.js"></script>
+        <script type="module" src="websockets.js"></script>
+        <script src="debug.js"></script>
+    </head>
+    <body>
+        <!-- https://stackoverflow.com/questions/21147149/flash-of-unstyled-content-fouc-in-firefox-only-is-ff-slow-renderer -->
+        <script>0</script>
+
+        <div class="content-container">
+            <div class="left-bar">
+                <div class="boxed extra-outer hidden">
+                    <div id="extra" class="extra-inner"></div>
+                </div>
+                <div class="category log-outer" data_legend="Log">
+                    <div id="log" class="log-inner"></div>
+                </div>
+            </div>
+            <div class="content">
+                <div class="tabs" id="tab-header">
+                    <div id="tab-filler"></div>
+                </div>
+                <div class="tab-content" id="main-content"></div>
+            </div>
+        </div>
+
+        <script>
+            let debug = {};
+        </script>
+    </body>
+</html>

@@ -1,0 +1,192 @@
+html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    font-family: monospace;
+
+    --main-col: #dedcd6;
+    --background-col: #191919;
+    --bgbg-col: #101010;
+    --disabled-col: #444444;
+    --tooltip-bg-col: #212124;
+    --tooltip-shadow-col: #0e0e0e;
+    --border: 1px solid var(--main-col);
+
+    --green-col: #7bdc6d;
+    --yellow-col: #dccb6d;
+    --red-col: #dc776d;
+
+    background-color: var(--bgbg-col);
+    background-color: var(--background-col);
+    color: var(--main-col);
+}
+
+.content-container {
+    position: absolute;
+    display: grid;
+    gap: 20px;
+    grid-template-columns: 250px 1fr;
+    top: 5%;
+    bottom: 5%;
+    left: 50%;
+    right: 50%;
+    max-width: 1000px;
+    width: 90%;
+    height: 90%;
+    transform: translate(-50%, 0);
+}
+
+.content {
+    display: grid;
+    grid-template-rows: 30px auto;
+    width: 100%;
+    height: 100%;
+}
+
+/*** Tooltip ************************************************/
+
+div[tooltip]::after {
+    pointer-events: none;
+    position: absolute;
+
+    padding: 10px 10px;
+    max-width: 80px;
+    width: 90%;
+    z-index: 999;
+    text-align: center;
+    opacity: 0;
+
+    content: attr(tooltip);
+    white-space: pre-wrap;
+    background-color: var(--tooltip-bg-col);
+    box-shadow: 0px 5px 8px var(--tooltip-shadow-col);
+
+    border-radius: 5px;
+}
+
+div[tooltip]:hover::after {
+    opacity: 1;
+}
+
+.button[tooltip]::after {
+    transform: translate(-50%, 5px);
+}
+
+/*** Category ***********************************************/
+
+.boxed, .category {
+    border-radius: 10px;
+    border: var(--border);
+    box-shadow: 0px 5px 15px var(--tooltip-shadow-col);
+}
+
+.category {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    position: relative;
+    padding: 20px;
+    gap: 10px;
+}
+.category::before {
+    background-color: var(--background-col);
+    position: absolute;
+    content: attr(data_legend);
+    font-size: 1.1em;
+    left: 0.8em;
+    top: -0.8em;
+}
+
+/*** Buttons ************************************************/
+
+.button-inner {
+    position: relative;
+    padding: 8px 10px;
+    z-index: 0;
+}
+
+.button {
+    position: relative;
+    border: var(--border);
+    width: 100px;
+    text-align: center;
+    cursor: pointer;
+    user-select: none;
+}
+
+.button:hover {
+    text-decoration: underline;
+}
+
+.button-disabled {
+    border-color: var(--disabled-col);
+    color: var(--disabled-col);
+}
+
+.button-disabled:hover {
+    cursor: default;
+    text-decoration: none;
+}
+
+.button-cooldown {
+    background-color: var(--main-col);
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    z-index: -1;
+}
+
+.button-text {
+    position: relative;
+}
+
+/*** Left Bar ***********************************************/
+
+.left-bar {
+    height: 100%; 
+    overflow: hidden;
+    display: grid;
+    grid-template-rows: 38% 58%;
+    row-gap: 4%;
+    grid-template-areas: 
+        "extra"
+        "log";
+}
+
+/*** Log ****************************************************/
+
+.log-outer {
+    /* height: 100%; */
+    padding: 0;
+    grid-area: log;
+}
+
+.log-inner {
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+    gap: 10px;
+    overflow: hidden;
+}
+
+.log-item {
+    /* color: green; */
+}
+
+/*** Extra **************************************************/
+
+.extra-outer {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+}
+
+#extra {
+    white-space: pre-wrap;
+    user-select: none;
+}

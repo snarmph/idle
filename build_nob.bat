@@ -1,1 +1,1 @@
-..\tcc\tcc -run reloader\colla\tools\nob.c reloader\colla\tools\nob.c
+./tcc -run reloader\colla\tools\nob.c reloader\colla\tools\nob.c

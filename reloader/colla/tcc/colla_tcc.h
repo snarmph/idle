@@ -44,6 +44,10 @@ extern int __stdcall MultiByteToWideChar(UINT CodePage, DWORD dwFlags, LPCCH lpM
 #define AF_INET            2
 #define INADDR_ANY         (ULONG)0x00000000
 
+#define INVALID_SOCKET  (SOCKET)(~0)
+#define WSAEVENT HANDLE
+#define WSA_INVALID_EVENT       ((WSAEVENT)NULL)
+
 #define WSA_IO_PENDING                   (ERROR_IO_PENDING)
 #define WSA_IO_INCOMPLETE                (ERROR_IO_INCOMPLETE)
 #define WSA_INVALID_HANDLE               (ERROR_INVALID_HANDLE)
@@ -149,6 +153,35 @@ extern int __stdcall MultiByteToWideChar(UINT CodePage, DWORD dwFlags, LPCCH lpM
 #define WSA_SECURE_HOST_NOT_FOUND        11032L
 #define WSA_IPSEC_NAME_POLICY_ERROR      11033L
 
+#define FD_READ_BIT      0
+#define FD_READ          (1 << FD_READ_BIT)
+#define FD_WRITE_BIT     1
+#define FD_WRITE         (1 << FD_WRITE_BIT)
+#define FD_OOB_BIT       2
+#define FD_OOB           (1 << FD_OOB_BIT)
+#define FD_ACCEPT_BIT    3
+#define FD_ACCEPT        (1 << FD_ACCEPT_BIT)
+#define FD_CONNECT_BIT   4
+#define FD_CONNECT       (1 << FD_CONNECT_BIT)
+#define FD_CLOSE_BIT     5
+#define FD_CLOSE         (1 << FD_CLOSE_BIT)
+#define FD_QOS_BIT       6
+#define FD_QOS           (1 << FD_QOS_BIT)
+#define FD_GROUP_QOS_BIT 7
+#define FD_GROUP_QOS     (1 << FD_GROUP_QOS_BIT)
+#define FD_MAX_EVENTS    10
+#define FD_ALL_EVENTS    ((1 << FD_MAX_EVENTS) - 1)
+
+#define _WS2_32_WINSOCK_SWAP_LONGLONG(l)            \
+            ( ( ((l) >> 56) & 0x00000000000000FFLL ) |       \
+              ( ((l) >> 40) & 0x000000000000FF00LL ) |       \
+              ( ((l) >> 24) & 0x0000000000FF0000LL ) |       \
+              ( ((l) >>  8) & 0x00000000FF000000LL ) |       \
+              ( ((l) <<  8) & 0x000000FF00000000LL ) |       \
+              ( ((l) << 24) & 0x0000FF0000000000LL ) |       \
+              ( ((l) << 40) & 0x00FF000000000000LL ) |       \
+              ( ((l) << 56) & 0xFF00000000000000LL ) )
+
 typedef UINT_PTR SOCKET;
 
 typedef struct WSAData {
@@ -227,6 +260,24 @@ typedef struct sockaddr {
     CHAR sa_data[14];                   // Up to 14 bytes of direct address.
 } SOCKADDR;
 
+typedef struct addrinfoW
+{
+    int                 ai_flags;       // AI_PASSIVE, AI_CANONNAME, AI_NUMERICHOST
+    int                 ai_family;      // PF_xxx
+    int                 ai_socktype;    // SOCK_xxx
+    int                 ai_protocol;    // 0 or IPPROTO_xxx for IPv4 and IPv6
+    size_t              ai_addrlen;     // Length of ai_addr
+    const wchar_t *     ai_canonname;   // Canonical name for nodename
+    struct sockaddr *   ai_addr;        // Binary address
+    struct addrinfoW *  ai_next;        // Next structure in linked list
+} ADDRINFOW, *PADDRINFOW;
+
+
+typedef struct _WSANETWORKEVENTS {
+    long lNetworkEvents;
+    int iErrorCode[FD_MAX_EVENTS];
+} WSANETWORKEVENTS, *LPWSANETWORKEVENTS;
+
 #define protoent tcc__protoent
 
 extern int __stdcall WSAStartup(WORD wVersionRequested, LPWSADATA lpWSAData);
@@ -242,13 +293,36 @@ extern int __stdcall bind(SOCKET s, const struct sockaddr *name, int namelen);
 extern int __stdcall listen(SOCKET s, int backlog);
 extern SOCKET __stdcall accept(SOCKET s, struct sockaddr *addr, int *addrlen);
 extern struct hostent *__stdcall gethostbyname(const char *name);
+extern INT GetAddrInfoW(PCWSTR pNodeName, PCWSTR pServiceName, const ADDRINFOW *pHints, PADDRINFOW *ppResult);
+extern PCSTR inet_ntop(INT Family, const VOID * pAddr, PSTR pStringBuf, size_t StringBufSize);
 
 extern char *__stdcall inet_ntoa(struct in_addr in);
+extern int inet_pton(INT Family, const char *pszAddrString, void *pAddrBuf);
 extern int __stdcall connect(SOCKET s, const struct sockaddr *name, int namelen);
 extern int __stdcall send(SOCKET s, const char *buf, int len, int flags);
 extern int __stdcall sendto(SOCKET s, const char *buf, int len, int flags, const struct sockaddr *to, int tolen);
 extern int __stdcall recv(SOCKET s, char *buf, int len, int flags);
 extern int __stdcall recvfrom(SOCKET s, char *buf, int len, int flags, struct sockaddr *from, int *fromlen);
+
+
+extern unsigned long htonl(unsigned long hostlong);
+extern unsigned short ntohs(unsigned short netshort);
+
+inline uint64_t htonll (uint64_t Value) {
+    const uint64_t Retval = _WS2_32_WINSOCK_SWAP_LONGLONG (Value);
+    return Retval;
+}
+
+inline uint64_t ntohll (uint64_t Value) {
+	const uint64_t Retval = _WS2_32_WINSOCK_SWAP_LONGLONG (Value);
+	return Retval;
+}
+
+extern WSAEVENT WSACreateEvent(void);
+extern int WSAEventSelect(SOCKET s, WSAEVENT hEventObject, long lNetworkEvents);
+extern BOOL WSACloseEvent(WSAEVENT hEvent);
+extern BOOL WSAResetEvent(WSAEVENT hEvent);
+extern int WSAEnumNetworkEvents(SOCKET s, WSAEVENT hEventObject, LPWSANETWORKEVENTS lpNetworkEvents);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
 

@@ -84,6 +84,19 @@ str_t route_default(arena_t scratch, server_t *server, server_req_t *req, void *
     COLLA_UNUSED(userdata);
     COLLA_UNUSED(server);
 
+    strview_t ext = STRV_EMPTY;
+    strview_t name = STRV_EMPTY;
+    os_file_split_path(strv(req->page), NULL, &name, &ext);
+    if (strv_is_empty(ext)) {
+        if (strv_equals(name, strv("/"))) {
+            req->page = str_fmt(&scratch, "%vindex.html", req->page);
+        }
+        else {
+            req->page = str_fmt(&scratch, "%v.html", req->page);
+        }
+        return route_default(scratch, server, req, userdata);
+    }
+
     str_t path = str_fmt(&scratch, "%v%v", state.folder, req->page);
     if (os_file_exists(strv(path))) {
         oshandle_t fp = os_handle_zero();

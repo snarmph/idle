@@ -6,7 +6,9 @@
 #include "colla/os.h"
 #include "colla/net.h"
 
+#if !COLLA_TCC
 #include <WinSock2.h>
+#endif
 
 typedef uptr socket_t;
 

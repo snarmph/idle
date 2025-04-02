@@ -1,14 +1,12 @@
-import { makeEnum } from "./utils.js";
-
 let bus = {
     list: [],
     freelist: [],
 };
 
-export function sendMessage(msg) {
+export function sendMessage(msg, payload = null) {
     for (const item of bus.list) {
         if (item !== null) {
-            item(msg);
+            item(msg, payload);
         }
     }
 }
