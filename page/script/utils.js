@@ -146,10 +146,10 @@ export function randomResources(probabilities) {
         return out._results;
     };
     for (const [id, prob] of Object.entries(probabilities)) {
-        let count = 0;
         const always_one = !("max" in prob);
         const min = "min" in prob ? prob.min : 0;
         const max = !always_one ? prob.max : 1;
+        let count = min;
 
         let passed = true;
         if ("atleast" in prob) {
@@ -184,6 +184,10 @@ export function randomResources(probabilities) {
     return out;
 }
 
+export function randomItem(arr) {
+    return arr[getRandomInt(0, arr.length)];
+}
+
 export function forEachCond(arr) {
     for (let i = 0; i < arr.length; ++i) {
         arr[i].step();
@@ -192,5 +196,14 @@ export function forEachCond(arr) {
             arr.pop();
             --i;
         }
+    }
+}
+
+export function formatNumber(num) {
+    if (Number.isInteger(num)) {
+        return String(num);
+    }
+    else {
+        return num.toFixed(2);
     }
 }

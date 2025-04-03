@@ -1,14 +1,15 @@
 import { makeEnum, makeObjectEnum } from "script/utils.js";
 
 export const MessageTypes = makeEnum([
-    "inventoryUpdate",
     "resourceUpdate", 
     "itemUpdate", 
+    "minionUpdate",
 ]);
 
 export const Colours = makeObjectEnum({
     default: "main-col",
     green: "green-col",
+    yellow: "yellow-col",
     red: "red-col",
 });
 
@@ -22,9 +23,17 @@ export const Resources = makeObjectEnum({
     },
     wheat: {
         name: "wheat",
+        value: 0.2,
     },
     stone: {
         name: "stone",
+    },
+    money: {
+        name: "money",
+    },
+    minion: {
+        name: "minion",
+        value: 10,
     }
 })
 
@@ -35,7 +44,7 @@ export const Items = makeObjectEnum({
         visible: false,
         upgrades: [
             {
-                name: "Small House",
+                name: "Tent",
                 show: {
                     [Resources.wood]: 20,
                 },
@@ -45,7 +54,7 @@ export const Items = makeObjectEnum({
                 time: 2.0,
             },
             {
-                name: "Medium House",
+                name: "House",
                 show: {
                     [Resources.stone]: 20,
                 },
@@ -56,7 +65,7 @@ export const Items = makeObjectEnum({
                 time: 4.0,
             },
             // {
-            //     name: "Big House",
+            //     name: "Castle",
             //     show: {
             //         [Resources.wood]: 20,
             //     },
@@ -109,7 +118,8 @@ export const Items = makeObjectEnum({
                 },
                 cost: {
                     [Resources.wood]: 50,
-                }
+                },
+                time: 0.2,
             },
             {
                 name: "Stone Trowel",
@@ -120,7 +130,8 @@ export const Items = makeObjectEnum({
                 cost: {
                     [Resources.wood]: 50,
                     [Resources.stone]: 20,
-                }
+                },
+                time: 0.4,
             }
         ]
     },
@@ -137,7 +148,8 @@ export const Items = makeObjectEnum({
                 },
                 cost: {
                     [Resources.wood]: 50,
-                }
+                },
+                time: 0.2,
             },
             {
                 name: "Stone Scythe",
@@ -148,7 +160,36 @@ export const Items = makeObjectEnum({
                 cost: {
                     [Resources.wood]: 50,
                     [Resources.stone]: 20,
-                }
+                },
+                time: 0.4,
+            }
+        ]
+    },
+    axe: {
+        name: "Axe",
+        numerable: false,
+        upgrades: [
+            {
+                name: "Wood Axe",
+                show: {
+                    [Resources.wheat]: 20,
+                },
+                cost: {
+                    [Resources.wood]: 50,
+                },
+                time: 0.2,
+            },
+            {
+                name: "Stone Axe",
+                show: {
+                    [Resources.stone]: 10,
+                    [Resources.wheat]: 50,
+                },
+                cost: {
+                    [Resources.wood]: 50,
+                    [Resources.stone]: 20,
+                },
+                time: 0.4,
             }
         ]
     }

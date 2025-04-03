@@ -1,1 +1,1 @@
-.\tcc -g -Wall -Werror -run reloader/main.c page
+tcc\tcc -g -Wall -Werror -run reloader/main.c page

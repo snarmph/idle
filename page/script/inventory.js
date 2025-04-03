@@ -175,6 +175,18 @@ export class Inventory {
         return id in this.resources ? this.resources[id] : null;
     }
 
+    sellResource(id, count = 1) {
+        const value = Resources.get(id, "value");
+        this.resources[id].remove(count);
+        this.addResource(Resources.money, value * count);
+    }
+
+    buyResource(id, count = 1) {
+        const value = Resources.get(id, "value");
+        this.resources[Resources.money].remove(value * count);
+        this.addResource(id, count);
+    }
+
     addItem(id, count, total = count, upgrade = -1) {
         if (id in this.items) {
             if (count == 0) {

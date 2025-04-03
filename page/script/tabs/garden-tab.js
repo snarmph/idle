@@ -1,7 +1,7 @@
 import { BaseTab } from "./base-tab.js";
 import { ItemCondition } from "script/condition.js"
 import { Items, Resources, Colours, MessageTypes } from "script/enums.js"
-import { makeVisible, makeInvisible } from "script/utils.js"
+import { makeVisible, makeInvisible, randomItem } from "script/utils.js"
 import { GardenTile, TileState } from "script/garden.js";
 import { Button, make } from "script/ui.js"
 import { game } from "script/game.js"
@@ -9,6 +9,7 @@ import { addListener, removeListener } from "script/messages.js"
 
 
 let houses = null;
+let trees = null;
 
 class TileButton extends Button {
     constructor(id, parent) {
@@ -18,6 +19,7 @@ class TileButton extends Button {
             }
         )
         this.button.classList.add("garden-tile-button");
+
         this.addOnClick(() => this.checkCost());
         this.garden_tile = new GardenTile();
         this.listener_id = null;
@@ -26,17 +28,23 @@ class TileButton extends Button {
 
     update() {
         const state = TileState.fromIndex(this.garden_tile.state);
-        this.setText(state.name);
+        if ("emoji" in state) {
+            const emoji = state.emoji;
+            this.setButtonContent(`${state.name} <span class="garden-tile-emoji" style="color: var(--${Colours.fromIndex(emoji.colour)})">${emoji.text}</span>`);
+        }
+        else {
+            this.setText(state.name);
+        }
         let time = state.default_time;
         if ("time" in state) {
-            console.log(state.time);
             for (const [id, cooldown] of Object.entries(state.time)) {
+                const item = game.inventory.getItem(id);
                 if (game.inventory.getItem(id).count > 0) {
-                    time = cooldown;
+                    time = cooldown[item.upgrade - 1];
                 }
             }
         }
-        this.setTimeout(time * 0.1);
+        this.setTimeout(time * .1);
 
         if (!this.garden_tile.step()) {
             this.setupListener(state.cost);
@@ -45,9 +53,6 @@ class TileButton extends Button {
             this.setTooltip(null);
         }
 
-        if ("message" in state) {
-            game.log(`A patch in the garden is ready to be ${state.message}`, Colours.green);
-        }
         if (this.garden_tile.state === TileState.growing) {
             this.onClick();
         }
@@ -55,9 +60,16 @@ class TileButton extends Button {
 
     nextState() {
         if (this.garden_tile.nextState()) {
-            const result = this.garden_tile.harvest();
-            game.inventory.addResource(result.resource, result.count);
-            game.log(`Harvested ${result.count} ${Resources.name(result.resource)}`);
+            const harvested = this.garden_tile.harvest().getResults();
+            //let msg = "";
+            for (const item of harvested) {
+                game.inventory.addResource(item.id, item.count);
+            //    if (msg.length !== 0) {
+            //        msg += " and";
+            //    }
+            //    msg += ` ${item.count} ${item.name}`
+            }
+            //game.log("Harvested" + msg);
         }
         this.update();
         if (this.listener_id) {
@@ -100,6 +112,49 @@ class TileButton extends Button {
             }
         }
     }
+};
+
+class AddTileButton extends Button {
+    constructor(id, garden) {
+        super(
+            id, garden.tiles_element, "Clear Patch", .60, () => {
+                garden.addTile();
+                game.inventory.addResource(Resources.wood, 100);
+            }
+        )
+        this.button.classList.add("garden-add-path-button");
+        this.button.classList.add("garden-tile-button");
+
+        this.cond = new ItemCondition({
+            [Items.axe]: 1
+        });
+        this.disable();
+        this.setTooltip(`Need an ${Items.name(Items.axe)}`);
+
+        let listener_id = addListener((msg, p) => {
+            if (msg == MessageTypes.itemUpdate) {
+                if (this.cond.step()) {
+                    this.cond = null;
+                    removeListener(listener_id);
+                    this.enable();
+                    this.setTooltip(null);  
+                }
+            }
+        })
+    }
+}
+
+class EmptyTile {
+    constructor(index, garden) {
+        this.element = make({
+            id: `empty-tile-${index}`,
+            parent: garden.tiles_element,
+            attr: {
+                class: "garden-empty-tile",
+            }
+        });
+        this.element.textContent = randomItem(trees);
+    }
 }
 
 export class GardenTab extends BaseTab {
@@ -119,16 +174,51 @@ export class GardenTab extends BaseTab {
 
         this.extra = document.getElementById("extra");
         this.index = 0;
-        this.upgrade = 1;
+        this.upgrade = 0;
         this.house_anim = null;
         this.tiles = [];
+        this.empty_tiles = [];
+        this.max_tiles = [
+            5, 10, 25
+        ];
 
         this.initialised = false;
+
+        addListener((msg, p) => {
+            if (msg == MessageTypes.itemUpdate) {
+                if (p.id === Items.house) {
+                    this.upgradeHouse();
+                }
+            }
+        })
     }
 
     /* override */
     onVisible() {
-        this.tiles.push(new TileButton("test-tile", this.tiles_element));
+        for (let i = 0; i < 1; ++i) {
+            this.tiles.push(new TileButton(`test-tile-${i}`, this.tiles_element));
+        }
+        this.add_tile = new AddTileButton("garden-add-tile", this);
+        const max_trees = this.max_tiles[this.max_tiles.length - 1];
+        for (let i = this.tiles.length + 1; i < max_trees; ++i) {
+            this.empty_tiles.push(new EmptyTile(i, this));
+        }
+    }
+
+    addTile() {
+        this.tiles_element.removeChild(this.add_tile.button);
+        for (const tile of this.empty_tiles) {
+            this.tiles_element.removeChild(tile.element);
+        }
+
+        this.tiles.push(new TileButton(`test-tile-${this.tiles.length}`, this.tiles_element));
+        if (this.tiles.length < this.max_tiles[this.upgrade]) {
+            this.empty_tiles.shift();
+            this.tiles_element.appendChild(this.add_tile.button);
+        }
+        for (const tile of this.empty_tiles) {
+            this.tiles_element.appendChild(tile.element);
+        }
     }
 
     /* override */
@@ -149,37 +239,72 @@ export class GardenTab extends BaseTab {
         this.extra.textContent = houses[this.upgrade][this.index];
         this.index = (this.index + 1) % houses[this.upgrade].length;
     }
+
+    upgradeHouse() {
+        this.upgrade = game.inventory.getItem(Items.house).upgrade - 1;
+        if (this.upgrade >= this.max_tiles.length) return;
+        if (this.upgrade === 0) return;
+
+        for (const tile of this.empty_tiles) {
+            this.tiles_element.removeChild(tile.element);
+        }
+        if (this.tiles.length >= this.max_tiles[this.upgrade - 1]) {
+            this.empty_tiles.shift();
+            this.tiles_element.appendChild(this.add_tile.button);
+        }
+
+        for (const tile of this.empty_tiles) {
+            this.tiles_element.appendChild(tile.element);
+        }
+
+        this.index = 0;
+        this.updateAnimation();
+    }
 }
 
 
 houses = [
     [
-`             
-             )        
-            (         
-    ________[]_       
-   /^=^-^-^=^-^\\      
-  /^-^-^-^-^-^-^\\     
- /__^_^_^_^^_^_^_\\    
-  |  .==.       |     
-^^|  |  |  [}{] |^^^^^
-&&|__|__|_______|&&   
-     ====             
-      ====             
+`       
+        ______      
+       /     /\\
+      /     /  \\
+     /_____/----\\_    )  
+    "     "          (.  
+   _ ___          o (:') o   
+  (@))_))        o ~/~~\\~ o   
+                  o  o  o           
 `,
-`            
-            (        
-             )        
-    ________[]_       
-   /^=^-^-^=^-^\\      
-  /^-^-^-^-^-^-^\\     
- /__^_^_^_^^_^_^_\\    
-  |  .==.       |     
-^^|  |  |  [}{] |^^^^^
-&&|__|__|_______|&&   
-     ====             
-      ====             
-` 
+`             
+        ______
+       /     /\\
+      /     /  \\
+     /_____/----\\_   .(  
+    "     "          )   
+   _ ___          o (:') o   
+  (@))_))        o ~/~~\\~ o   
+                  o  o  o               
+` ,
+`             
+        ______
+       /     /\\
+      /     /  \\      .
+     /_____/----\\_    )  
+    "     "          (.   
+   _ ___          o (:') o   
+  (@))_))        o ~/~~\\~ o   
+                  o  o  o               
+` ,
+`             
+        ______
+       /     /\\
+      /     /  \\
+     /_____/----\\_   .(  
+    "     "          )   
+   _ ___          o (:') o   
+  (@))_))        o ~/~~\\~ o   
+                  o  o  o               
+` ,
     ],
     [
 `
@@ -206,3 +331,24 @@ houses = [
 `,
     ],
 ];  
+
+
+trees = [
+`
+ 8% 
+8%88
+ || 
+`,
+`
+    %8
+ 8%8888% 
+8%88||
+ || 
+`,
+`
+ 8%   %8
+8%88%8888 
+ |8%8%||
+   || 
+`
+]

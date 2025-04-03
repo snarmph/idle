@@ -3,6 +3,7 @@
     <head>
         <link rel="stylesheet" href="style/common.css"/>
         <link rel="stylesheet" href="style/tabs.css"/>
+        <link rel="stylesheet" href="style/minion.css"/>
         <!-- <link rel="stylesheet" href="style/inventory.css"/> -->
         <!-- <link rel="stylesheet" href="style/cave.css"/> -->
         <link rel="stylesheet" href="style/tabs/idle-tab.css"/>
@@ -16,7 +17,8 @@
         <script type="importmap">
             {
                 "imports": {
-                    "script/": "./script/"
+                    "script/": "./script/",
+                    "tabs/": "./script/tabs/"
                 }
             }
         </script>
@@ -28,6 +30,17 @@
     <body>
         <!-- https://stackoverflow.com/questions/21147149/flash-of-unstyled-content-fouc-in-firefox-only-is-ff-slow-renderer -->
         <script>0</script>
+
+        <div id="minion-tab">
+            <div class="minion-container">
+                <div id="minion-title">
+                    Pinpins
+                </div>
+                <div id="minion-data">
+                    
+                </div>
+            </div>
+        </div>
 
         <div class="content-container">
             <div class="left-bar">

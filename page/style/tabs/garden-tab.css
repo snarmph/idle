@@ -1,3 +1,10 @@
+#content-garden {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    height: 100%;
+}
+
 .garden-tile-button {
     display: flex;
     flex-direction: column;
@@ -14,4 +21,26 @@
 .garden-tile-button[tooltip]::after {
     transform: translate(0px, 5px);
     top: 100%;
+}
+
+.garden-tiles {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    grid-template-rows: repeat(5, 1fr);
+    gap: 20px;
+}
+
+.garden-tile-emoji {
+    font-size: 1.2em;
+}
+
+.button-disabled .garden-tile-emoji {
+    color: var(--disabled-col) !important;
+}
+
+.garden-empty-tile {
+    white-space: pre-wrap;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
 }
