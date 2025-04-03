@@ -200,6 +200,7 @@ export class Button {
     }
 
     enable() {
+        if (this.is_in_cooldown) return;
         this.button.classList.remove("button-disabled");
         this.disabled = false;
         this.cooldown.setAttribute("style", "width: 0%");
@@ -209,9 +210,17 @@ export class Button {
         this.text.textContent = text;
     }
 
+    setButtonContent(content) {
+        this.text.innerHTML = content;
+    }
+
     disable() {
         this.button.classList.add("button-disabled");
         this.disabled = true;
+    }
+
+    isEnabled() {
+        return !this.disabled;
     }
 
     startCooldown() {
@@ -275,6 +284,12 @@ export class Button {
         }
         else {
             makeInvisible(this.button);
+        }
+    }
+
+    click() {
+        if (!this.disabled) {
+            this.button.click();
         }
     }
 };

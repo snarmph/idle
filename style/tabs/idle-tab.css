@@ -1,4 +1,5 @@
 #content-idle {
+    height: 100%;
 }
 
 .idle-grid {
@@ -6,6 +7,10 @@
     width: 100%;
     height: 100%;
     grid-template-columns: 1fr 1fr 2fr;
+    grid-template-rows: 1fr 100px;
+    grid-template-areas:
+        "none none none"
+        "seller seller seller";
 }
 
 .idle-get-buttons, .idle-build-buttons {
@@ -32,4 +37,21 @@
     position: absolute;
     max-width: 100%;
     top: calc(50% + 10px);
+}
+
+
+#sell-button-wheat:active  {
+    border-color: var(--disabled-col);
+    color: var(--disabled-col);
+}
+
+#idle-seller {
+    flex-direction: row;
+    grid-area: seller;
+}
+
+#idle-seller .button {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
 }

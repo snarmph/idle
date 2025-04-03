@@ -1,11 +1,10 @@
-import { makeObjectEnum, getRandomInt, randomCheckPercent } from "script/utils.js"
-import { Items, Resources } from "script/enums.js"
+import { makeObjectEnum, getRandomInt, randomCheckPercent, randomResources } from "script/utils.js"
+import { Items, Resources, Colours } from "script/enums.js"
 import { ResourceCondition } from "script/condition.js"
 
 export const TileState = makeObjectEnum({
     dirt: {
         name: "Prepare",
-        message: "prepared",
         default_time: 10,
         time: {
             [Items.hoe]: [
@@ -15,7 +14,10 @@ export const TileState = makeObjectEnum({
     },
     cleaned: {
         name: "Plant",
-        message: "planted",
+        emoji: {
+           text: "𖧧",
+           colour: Colours.green,
+        },
         cost: {
             [Resources.seeds]: 1,
         },
@@ -32,6 +34,10 @@ export const TileState = makeObjectEnum({
     },
     ready: {
         name: "Harvest",
+        emoji: {
+           text: "𓌜",
+           colour: Colours.yellow,
+        },
         default_time: 5,
         time: {
             [Items.scythe]: [
@@ -78,14 +84,10 @@ export class GardenTile {
     }
 
     harvest() {
-        let count = 1;
-        if (randomCheckPercent(80)) {
-            count = getRandomInt(2, 4);
-        }
-        return {
-            resource: this.resource,
-            count: count,
-        };
+        return randomResources({
+            [Resources.wheat]: { min: 1, max: 4, atleast: 80 },
+            [Resources.seeds]: { atleast: 90 },
+        });
     }
 }
 
