@@ -199,11 +199,149 @@ export function forEachCond(arr) {
     }
 }
 
-export function formatNumber(num) {
+function formatNumberImpl(num) {
     if (Number.isInteger(num)) {
         return String(num);
     }
     else {
         return num.toFixed(2);
     }
+}
+
+function numberShorten(num) {
+    const strings = Object.freeze([
+        "thousands",
+        "millions",
+        "billions",
+        "trillions",
+        "quadrillions",
+        "quintillions",
+        "sextillions",
+        "septillions",
+        "octillions",
+        "nonillions",
+        "decillions",
+        "undecillions",
+        "duodecillions",
+        "tredecillions",
+        "quattuordecillions",
+        "quindecillions",
+        "sexdecillions",
+        "septendecillions",
+        "octodecillions",
+        "novemdecillions",
+        "vigintillions",
+        "unvigintillions",
+        "duovigintillions",
+        "trevigintillions",
+        "quattuorvigintillions",
+        "quinvigintillions",
+        "sexvigintillions",
+        "septenvigintillions",
+        "octovigintillions",
+        "novemvigintillions",
+        "trigintillions",
+        "untrigintillions",
+        "duotrigintillions",
+        "googols",
+        "googoltys",
+        "tretrigintillions",
+        "quattuortrigintillions",
+        "quintrigintillions",
+        "sextrigintillions",
+        "septentrigintillions",
+        "octotrigintillions",
+        "novemtrigintillions",
+        "quadragintillions",
+        "unquadragintillions",
+        "duoquadragintillions",
+        "trequadragintillions",
+        "quattuorquadragintillions",
+        "quinquadragintillions",
+        "sexquadragintillions",
+        "septenquadragintillions",
+        "octoquadragintillions",
+        "novemquadragintillions",
+        "quinquagintillions",
+        "unquinquagintillions",
+        "duoquinquagintillions",
+        "trequinquagintillions",
+        "quattuorquinquagintillions",
+        "quinquinquagintillions",
+        "sexquinquagintillions",
+        "septenquinquagintillions",
+        "octoquinquagintillions",
+        "novemquinquagintillions",
+        "sexagintillions",
+        "unsexagintillions",
+        "duosexagintillions",
+        "tresexagintillions",
+        "quattuorsexagintillions",
+        "quinsexagintillions",
+        "sexsexagintillions",
+        "septensexagintillions",
+        "octosexagintillions",
+        "novemsexagintillions",
+        "septuagintillions",
+        "unseptuagintillions",
+        "duoseptuagintillions",
+        "treseptuagintillions",
+        "quattuorseptuagintillions",
+        "quinseptuagintillions",
+        "sexseptuagintillions",
+        "septenseptuagintillions",
+        "octoseptuagintillions",
+        "novemseptuagintillions",
+        "octogintillions",
+        "unoctogintillions",
+        "duooctogintillions",
+        "treoctogintillions",
+        "quattuoroctogintillions",
+        "quinoctogintillions",
+        "sexoctogintillions",
+        "septenoctogintillions",
+        "octooctogintillions",
+        "novemoctogintillions",
+        "nonagintillions",
+        "unnonagintillions",
+        "duononagintillions",
+        "trenonagintillions",
+        "quattuornonagintillions",
+        "quinnonagintillions",
+        "sexnonagintillions",
+        "septennonagintillions",
+        "octononagintillions",
+        "novemnonagintillions",
+        "centillions",
+    ]);
+
+    if (num < 1_000) return formatNumberImpl(num);
+
+    let current_value = 1_000;
+    for (let i = 0; i < strings.length; ++i) {
+        const next_value = current_value * 1000;
+        if (num < next_value) {
+            return `${formatNumberImpl(num / current_value)} ${strings[i]}`;
+        }
+        current_value = next_value;
+    }
+
+    return formatNumberImpl(num);
+}
+
+export function formatNumber(num) {
+    return numberShorten(num);
+}
+
+export function getResourceName(id, count) {
+    const name = Resources.name(id);
+    if (count <= 1) {
+        const singular = Resources.get(id, "singular", null);
+        return singular ? singular : name;
+    }
+    return name;
+}
+
+export function valueString(id, count) {
+    return `${count > 0 ? "+" : ""}${formatNumber(count)} ${getResourceName(id, Math.abs(count))}`;
 }

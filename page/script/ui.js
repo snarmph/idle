@@ -36,7 +36,6 @@ export function make(data) {
 
 export class Tab {
     constructor(tab) {
-    // constructor(id, name, content) {
         this.tab_element = make({
             content: tab.name,
             attr: {
@@ -261,11 +260,20 @@ export class Button {
         this.timeout = seconds * 1000.0;
     }
 
-    setTooltip(text) {
-        if (text == null) {
+    setTooltipText(text) {
+        this.button.setAttribute("tooltip", text);
+    }
+
+    setTooltip(values) {
+        if (values === null || values.length === 0) {
             this.button.removeAttribute("tooltip");
         }
         else {
+            let text = "";
+            for (const v of values) {
+                // text += `&lt;div class=&quot;tooltip-item&quot;&gt;${v}&lt;/div&gt;`;
+                text += `${v}\n`;
+            }
             this.button.setAttribute("tooltip", text);
         }
     }

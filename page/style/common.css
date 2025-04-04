@@ -52,14 +52,14 @@ div[tooltip]::after {
     position: absolute;
 
     padding: 10px 10px;
-    max-width: 80px;
-    width: 90%;
     z-index: 999;
-    text-align: center;
+    /* text-align: center; */
+    text-align: left;
+    white-space: pre-wrap;
+    text-wrap: nowrap;
     opacity: 0;
 
     content: attr(tooltip);
-    white-space: pre-wrap;
     background-color: var(--tooltip-bg-col);
     box-shadow: 0px 5px 8px var(--tooltip-shadow-col);
 

@@ -3,10 +3,9 @@ import { ItemCondition } from "script/condition.js"
 import { Items, Resources, Colours, MessageTypes } from "script/enums.js"
 import { makeVisible, makeInvisible, randomItem } from "script/utils.js"
 import { GardenTile, TileState } from "script/garden.js";
-import { Button, make } from "script/ui.js"
+import { Button, make, tab_manager } from "script/ui.js"
 import { game } from "script/game.js"
 import { addListener, removeListener } from "script/messages.js"
-
 
 let houses = null;
 let trees = null;
@@ -15,6 +14,7 @@ class TileButton extends Button {
     constructor(id, parent) {
         super(
             id, parent, "tile-text", 1, () => {
+                if (!this.garden_tile.step()) return;
                 this.nextState();
             }
         )
@@ -79,14 +79,11 @@ class TileButton extends Button {
     }
 
     setupListener(cost) {
-        let tooltip = "";
+        let tooltip = [];
 
         const res = Object.entries(cost);
         for (let i = 0; i < res.length; ++i) {
-            if (i > 0) {
-                tooltip += "\n";
-            }
-            tooltip += `-${res[i][1]} ${Resources.name(res[i][0])}`;
+            tooltip.push(`-${res[i][1]} ${Resources.name(res[i][0])}`)
         }
         
         this.setTooltip(tooltip);
@@ -129,7 +126,7 @@ class AddTileButton extends Button {
             [Items.axe]: 1
         });
         this.disable();
-        this.setTooltip(`Need an ${Items.name(Items.axe)}`);
+        this.setTooltipText(`Need an ${Items.name(Items.axe)}`);
 
         let listener_id = addListener((msg, p) => {
             if (msg == MessageTypes.itemUpdate) {
@@ -159,7 +156,7 @@ class EmptyTile {
 
 export class GardenTab extends BaseTab {
     constructor() {
-        super("garden", "Small House", new ItemCondition({
+        super("garden", "Tent", new ItemCondition({
             [Items.house]: 1,
         }));
         // super("garden", "Garden");
@@ -257,8 +254,13 @@ export class GardenTab extends BaseTab {
             this.tiles_element.appendChild(tile.element);
         }
 
+        const item = Items.fromIndex(Items.house);
+        this.tab_header.textContent = item.upgrades[this.upgrade].name;
+
         this.index = 0;
-        this.updateAnimation();
+        if (tab_manager.active.id === this.tab_id) {
+            this.updateAnimation();
+        }
     }
 }
 
