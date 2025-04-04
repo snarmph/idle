@@ -11,6 +11,8 @@ export class BaseTab {
 
         // tab_manager.add(this.tab_id, this.name, this.content_element);
         tab_manager.add(this);
+
+        this.tab_header = document.getElementById(this.tab_id);
     }
 
     isVisible() {

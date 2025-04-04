@@ -1,10 +1,10 @@
 import { BaseTab } from "tabs/base-tab.js";
 import { make, Category, Button, tab_manager } from "script/ui.js"
-import { addListener } from "script/messages.js";
+import { addListener, sendMessage } from "script/messages.js";
 import { MessageTypes, Resources, Items, Colours } from "script/enums.js"
 import { Item } from "script/inventory.js"
 import { game } from "script/game.js"
-import { getRandomInt, randomCheckPercent, makeInvisible, makeVisible, forEachCond, randomResources, formatNumber } from "script/utils.js"
+import { valueString, getResourceName, getRandomInt, randomCheckPercent, makeInvisible, makeVisible, forEachCond, randomResources, formatNumber } from "script/utils.js"
 import { ResourceCondition } from "script/condition.js";
 import { Minion, MinionType } from "script/minion.js";
 import * as actions from "script/actions.js"
@@ -32,14 +32,13 @@ export class BuildItemButton extends Button {
         if (this.cost === null) {
             return;
         }
-        let tooltip = "";
+        let tooltip = [];
 
         const res = Object.entries(this.cost);
         for (let i = 0; i < res.length; ++i) {
-            if (i > 0) {
-                tooltip += "\n";
-            }
-            tooltip += `-${res[i][1]} ${Resources.name(res[i][0])}`;
+            const count = res[i][1];
+            const id = res[i][0];
+            tooltip.push(valueString(id, count));
         }
         
         this.setTooltip(tooltip);
@@ -51,7 +50,7 @@ class SellButton extends Button {
         let name = "Sell ";
         if (count === 1) name += "a ";
         else name += `${count} `;
-        name += Resources.name(resource);
+        name += getResourceName(resource, count);
 
         super(
             `sell-button-${Resources.key(resource)}`, 
@@ -64,10 +63,10 @@ class SellButton extends Button {
         ),
 
         this.value = Resources.get(resource, "value", 0);
-        this.setTooltip(
-`-${count} ${Resources.name(resource)}
-+${this.value * count} ${Resources.name(Resources.money)}`
-        );
+        this.setTooltip([
+            valueString(resource, count),
+            valueString(Resources.money, this.value *count),
+        ]);
         
         this.cooldown.remove();
         this.addOnClick(() => {
@@ -99,7 +98,7 @@ class BuyButton extends Button {
         let name = "Buy ";
         if (count === 1) name += "a ";
         else name += `${count} `;
-        name += Resources.name(resource);
+        name += getResourceName(resource, count);
 
         super(
             `buy-button-${Resources.key(resource)}`, 
@@ -112,10 +111,10 @@ class BuyButton extends Button {
         ),
 
         this.value = Resources.get(resource, "value", 0);
-        this.setTooltip(
-`-${this.value * count} ${Resources.name(Resources.money)}
-+${count} ${Resources.name(resource)}`
-        );
+        this.setTooltip([
+            valueString(Resources.money, this.value * count),
+            valueString(resource, count),
+        ]);
         
         this.cooldown.remove();
         this.addOnClick(() => {
@@ -162,10 +161,10 @@ class BuyMinion extends Button {
         ),
 
         this.value = minion.value;
-        this.setTooltip(
-`-${this.value * count} ${Resources.name(Resources.money)}
-+${count} ${minion.name}`
-        );
+        this.setTooltip([
+            valueString(Resources.money, -this.value * count),
+            `+${count} ${minion.name}`
+        ]);
         
         this.cooldown.remove();
         this.addOnClick(() => {
@@ -256,6 +255,7 @@ export class IdleTab extends BaseTab {
                     this.merchant_visible = true;
                     this.buy_button = new SellButton(Resources.wheat, 5, this.seller_category.element);
                     game.log("A merchant has appeared", Colours.yellow);
+                    sendMessage(MessageTypes.eventUpdate);
                 }
             ),
             new ResourceCondition(
@@ -428,6 +428,10 @@ export class IdleTab extends BaseTab {
             makeVisible(this.items_category.element);
             makeVisible(item.container);
         }
+    }
+
+    isMerchantVisible() {
+        return this.merchant_visible;
     }
 
     showMerchant() {

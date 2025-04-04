@@ -13,17 +13,19 @@ export class Game {
         this.logger = new Logger();
         this.inventory = new Inventory();
         this.village = new Village();
+        this.forest = null;
         this.garden = null;
         // this.save_data = new SaveData();
     }
 
     init() {
-        const idle_tab = new IdleTab();
+        this.forest = new IdleTab();
         this.garden = new GardenTab();
 
         const village_tab = new VillageTab();
 
-        tab_manager.setActive(idle_tab.tab_id);
+        tab_manager.setActive(this.forest.tab_id);
+        tab_manager.setActive(village_tab.tab_id);
         // tab_manager.setActive(this.garden.tab_id);
         // this.inventory.init();
         // this.save_data.init();

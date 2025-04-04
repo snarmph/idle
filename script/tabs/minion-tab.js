@@ -1,3 +1,6 @@
+import { BaseTab } from "tabs/base-tab.js";
+import { Condition } from "script/condition.js"
+import { Category } from "script/ui.js"
 import { MinionType, Minion, Village } from "script/minion.js";
 import { addListener } from "script/messages.js";
 import { MessageTypes } from "script/enums.js";
@@ -6,10 +9,13 @@ import { make } from "script/ui.js"
 
 let minion_anim = null;
 
-export class VillageTab {
+export class VillageTab extends BaseTab {
     constructor() {
-        this.title_element = document.getElementById("minion-title");
-        this.data_element = document.getElementById("minion-data");
+        super("village", "Pinpins", new Condition(() => game.village.count() > 0));
+        
+        this.extra = document.getElementById("extra");
+
+        this.data_element = make({ attr: { class: "minion-data"}, parent: this.content_element });
 
         addListener((msg, p) => {
             if (msg !== MessageTypes.minionUpdate) return;
@@ -19,6 +25,35 @@ export class VillageTab {
 
     updateData(data) {
         let children = [];
+
+
+        for (const [type, minion] of MinionType.each()) {
+            const count = game.village.countOf(type);
+            if (count <= 0) continue;
+            
+            const container = make({
+                id: `minion-type-${minion.name}`,
+                attr: {
+                    class: "minion-type-container",
+                },
+            });
+            const item_name = make({
+                parent: container,
+                content: minion.name,
+                attr: {
+                    class: "minion-type-name",
+                }
+            });
+            const item_count = make({
+                parent: container,
+                content: count,
+                attr:{
+                    class: "minion-type-count",
+                },
+            });
+            children.push(container);
+        }
+/*
         for (const [type, minion] of MinionType.each()) {
             const count = game.village.countOf(type);
             if (count <= 0) continue;
@@ -46,6 +81,7 @@ export class VillageTab {
             children.push(container);
             // game.village.minions[type].count;
         }
+*/
         this.data_element.replaceChildren(...children);
         
         game.village.minions;

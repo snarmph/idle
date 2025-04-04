@@ -1,6 +1,7 @@
 import { makeEnum, makeObjectEnum } from "script/utils.js";
 
 export const MessageTypes = makeEnum([
+    "eventUpdate", 
     "resourceUpdate", 
     "itemUpdate", 
     "minionUpdate",
@@ -29,12 +30,9 @@ export const Resources = makeObjectEnum({
         name: "stone",
     },
     money: {
-        name: "money",
+        name: "coins",
+        singular: "coin",
     },
-    minion: {
-        name: "minion",
-        value: 10,
-    }
 })
 
 export const Items = makeObjectEnum({
@@ -64,16 +62,20 @@ export const Items = makeObjectEnum({
                 },
                 time: 4.0,
             },
-            // {
-            //     name: "Castle",
-            //     show: {
-            //         [Resources.wood]: 20,
-            //     },
-            //     cost: {
-            //         [Resources.wood]: 10000,
-            //     },
-            //     time: 4.0,
-            // }
+            {
+                name: "Castle",
+                show: {
+                    [Resources.wood]: 10000,
+                    [Resources.stone]: 5000,
+                    [Resources.money]: 1000,
+                },
+                cost: {
+                    [Resources.wood]: 100000,
+                    [Resources.stone]: 50000,
+                    [Resources.money]: 100000,
+                },
+                time: 4.0,
+            }
         ]
     },
     

@@ -53,13 +53,10 @@ export class Minion {
     }
 
     actionBase(index) {
-        this.actionFarmer(index);
-        /*
         const minion_type = getRandomInt(1, game.village.max_minion_level + 1);
         if (minion_type <= 0) return;
         const action = this.getActionForType(minion_type);
         action();
-        */
     }
 
     actionExplorer(index) {
