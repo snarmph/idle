@@ -1,0 +1,112 @@
+import { makeEnum } from "src/utils/enum.js"
+import { MessageTypes, sendMsg } from "src/messages.js"
+import { getRandomInt } from "src/utils/rand.js"
+import { game } from "src/game.js"
+import * as actions from "src/actions.js"
+
+export const PinpinType = makeEnum({
+    base: {
+        name: "Stupid Pinpin",
+        value: 10,
+        speed: 5.0,
+    },
+    explorer: {
+        name: "Explorer Pinpin",
+        value: 50,
+        speed: 1.0,
+    },
+    seller: {
+        name: "Seller Pinpin",
+        value: 100,
+        speed: 1.0,
+    },
+    farmer: {
+        name: "Farmer Pinpin",
+        value: 300,
+        speed: 1.0,
+    },
+})
+
+export class Pinpin {
+    constructor(type, count) {
+        this.type = type;
+        this.count = count;
+        this.interval_handle = null;
+        this.speed = PinpinType.get(type, "speed");
+        this.action = this.getActionForType(type);
+        this.interval_handle = null;
+    }
+
+    setup() {
+        this.interval_handle = setInterval(
+            () => this.action(),
+            this.speed * 1000.0
+        );
+    }
+
+    add(count) {
+        const was_zero = this.count === 0;
+        this.count += count;
+        if (was_zero) {
+            this.setup();
+        }
+    }
+    
+    actionBase() {
+        const pinpin_type = getRandomInt(1, game.village.max_pinpin_level + 1);
+        if (pinpin_type <= 0) return;
+        const action = this.getActionForType(pinpin_type);
+        action();
+    }
+    
+    actionExplorer() {
+        actions.exploreForest(this.count);
+    }
+
+    actionSeller() {
+        actions.trySell(1, this.count);
+    }
+
+    actionFarmer() {
+        actions.farm(this.count);
+    }
+
+    getActionForType(type) {
+        switch (type) {
+            case PinpinType.explorer: return () => this.actionExplorer();
+            case PinpinType.seller:   return () => this.actionSeller();
+            case PinpinType.farmer:   return () => this.actionFarmer();
+            default:                  return () => this.actionBase();
+        }
+    }
+}
+
+export class Village {
+    constructor() {
+        this.pinpins = {};
+        this.max_pinpin_level = -1;
+
+        for (const [id, _] of PinpinType.each()) {
+            this.pinpins[id] = new Pinpin(id, 0);
+        }
+    }
+
+    add(type, count = 1) {
+        console.log(">", PinpinType.name(type), type);
+        if (type > this.max_pinpin_level) this.max_pinpin_level = type;
+        this.pinpins[type].add(count);
+        sendMsg(MessageTypes.pinpinUpdate, { type: type, count: this.pinpins[type].count });
+    }
+
+    countOf(type) {
+        return this.minions[type].count;
+    }
+
+    count() {
+        let total = 0;
+        for (const [_, item] of Object.entries(this.pinpins)) {
+            total += item.count;
+        }
+        return total;
+    }
+}

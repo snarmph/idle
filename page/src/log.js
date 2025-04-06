@@ -1,19 +1,19 @@
-import { make } from "script/ui.js"
-import { lerp } from "script/utils.js"
-import { Colours } from "script/enums.js"
+import { htmlFromStr } from "src/ui/base.js"
+import { makeEnum } from "src/utils/enum.js";
+
+export const Colours = makeEnum({
+    default: "main-col",
+    green: "green-col",
+    yellow: "yellow-col",
+    red: "red-col",
+});
 
 class LogItem {
     constructor(msg, parent, color) {
         this.msg = msg;
-        this.element = make({
-            content: msg,
-            attr: {
-                class: "log-item",
-                colour: `var(--${color})`,
-            }
-        });
-
-        
+        this.element = htmlFromStr(`
+            <div class="log-item" colour="var(--${color})">${msg}</div>
+        `);
         this.element.style.color = `var(--${Colours.fromIndex(color)})`;
         
         parent.insertBefore(this.element, parent.children[0]);

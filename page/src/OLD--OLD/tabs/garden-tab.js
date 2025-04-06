@@ -1,11 +1,11 @@
 import { BaseTab } from "./base-tab.js";
-import { ItemCondition } from "script/condition.js"
-import { Items, Resources, Colours, MessageTypes } from "script/enums.js"
-import { makeVisible, makeInvisible, randomItem } from "script/utils.js"
-import { GardenTile, TileState } from "script/garden.js";
-import { Button, make, tab_manager } from "script/ui.js"
-import { game } from "script/game.js"
-import { addListener, removeListener } from "script/messages.js"
+import { ItemCondition } from "src/condition.js"
+import { Items, Resources, Colours, MessageTypes } from "src/enums.js"
+import { makeVisible, makeInvisible, randomItem } from "src/utils.js"
+import { GardenTile, TileState } from "src/garden.js";
+import { Button, make, tab_manager } from "src/ui.js"
+import { game } from "src/game.js"
+import { addListener, removeListener } from "src/messages.js"
 
 let houses = null;
 let trees = null;
@@ -28,8 +28,8 @@ class TileButton extends Button {
 
     update() {
         const state = TileState.fromIndex(this.garden_tile.state);
-        if ("emoji" in state) {
-            const emoji = state.emoji;
+        if ("icon" in state) {
+            const icon = state.icon;
             this.setButtonContent(`${state.name} <span class="garden-tile-emoji" style="color: var(--${Colours.fromIndex(emoji.colour)})">${emoji.text}</span>`);
         }
         else {

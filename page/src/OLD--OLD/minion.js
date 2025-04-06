@@ -1,11 +1,9 @@
-import { makeObjectEnum, getRandomInt } from "script/utils.js"
-import { game } from "script/game.js"
-import { sendMessage } from "script/messages.js"
-import { MessageTypes } from "script/enums.js";
-// import { actions } from "script/actions.js"
-import * as actions from "script/actions.js"
+import { makeObjectEnum, getRandomInt } from "src/utils.js"
+import { game } from "src/game.js"
+import { sendMessage, MessageTypes } from "src/messages.js"
+import * as actions from "src/actions.js"
 
-export const MinionType = makeObjectEnum({
+export const MinionType = makeEnum({
     base: {
         name: "Pinpin",
         value: 10,

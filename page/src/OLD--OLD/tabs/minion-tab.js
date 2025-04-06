@@ -1,11 +1,11 @@
 import { BaseTab } from "tabs/base-tab.js";
-import { Condition } from "script/condition.js"
-import { Category } from "script/ui.js"
-import { MinionType, Minion, Village } from "script/minion.js";
-import { addListener } from "script/messages.js";
-import { MessageTypes } from "script/enums.js";
-import { game } from "script/game.js"
-import { make } from "script/ui.js"
+import { Condition } from "src/condition.js"
+import { Category } from "src/ui.js"
+import { MinionType, Minion, Village } from "src/minion.js";
+import { addListener } from "src/messages.js";
+import { MessageTypes } from "src/enums.js";
+import { game } from "src/game.js"
+import { make } from "src/ui.js"
 
 let minion_anim = null;
 

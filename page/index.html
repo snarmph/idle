@@ -5,9 +5,9 @@
         <link rel="stylesheet" href="style/tabs.css"/>
         <!-- <link rel="stylesheet" href="style/inventory.css"/> -->
         <!-- <link rel="stylesheet" href="style/cave.css"/> -->
-        <link rel="stylesheet" href="style/tabs/idle-tab.css"/>
+        <link rel="stylesheet" href="style/tabs/forest-tab.css"/>
         <link rel="stylesheet" href="style/tabs/garden-tab.css"/>
-        <link rel="stylesheet" href="style/tabs/minion-tab.css"/>
+        <!-- <link rel="stylesheet" href="style/tabs/minion-tab.css"/> -->
         <style>
             .hidden {
                 display: none;
@@ -17,15 +17,14 @@
         <script type="importmap">
             {
                 "imports": {
-                    "script/": "./script/",
-                    "tabs/": "./script/tabs/"
+                    "src/": "./src/",
+                    "tabs/": "./src/tabs/"
                 }
             }
         </script>
 
-        <script type="module" src="script/main.js"></script>
+        <script type="module" src="src/main.js"></script>
         <script type="module" src="websockets.js"></script>
-        <script src="debug.js"></script>
     </head>
     <body>
         <!-- https://stackoverflow.com/questions/21147149/flash-of-unstyled-content-fouc-in-firefox-only-is-ff-slow-renderer -->

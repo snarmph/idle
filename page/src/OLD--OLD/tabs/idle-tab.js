@@ -1,13 +1,13 @@
 import { BaseTab } from "tabs/base-tab.js";
-import { make, Category, Button, tab_manager } from "script/ui.js"
-import { addListener, sendMessage } from "script/messages.js";
-import { MessageTypes, Resources, Items, Colours } from "script/enums.js"
-import { Item } from "script/inventory.js"
-import { game } from "script/game.js"
-import { valueString, getResourceName, getRandomInt, randomCheckPercent, makeInvisible, makeVisible, forEachCond, randomResources, formatNumber } from "script/utils.js"
-import { ResourceCondition } from "script/condition.js";
-import { Minion, MinionType } from "script/minion.js";
-import * as actions from "script/actions.js"
+import { make, Category, Button, tab_manager } from "src/ui.js"
+import { addListener, sendMessage } from "src/messages.js";
+import { MessageTypes, Resources, Items, Colours } from "src/enums.js"
+import { Item } from "src/inventory.js"
+import { game } from "src/game.js"
+import { valueString, getResourceName, getRandomInt, randomCheckPercent, makeInvisible, makeVisible, forEachCond, randomResources, formatNumber } from "src/utils.js"
+import { ResourceCondition } from "src/condition.js";
+import { Minion, MinionType } from "src/minion.js";
+import * as actions from "src/actions.js"
 
 let merchant = null;
 
@@ -267,12 +267,14 @@ export class IdleTab extends BaseTab {
         ];
 
         addListener((msg, payload) => {
-            if (msg == MessageTypes.resourceUpdate) {
-                this.addResource(payload);
-                forEachCond(this.conditions);
-            }
-            else if (msg == MessageTypes.itemUpdate) {
-                this.addItem(payload);
+            switch (msg) {
+                case MessageTypes.resourceUpdate:
+                    this.addResource(payload);
+                    forEachCond(this.conditions);
+                    break;
+                case MessageTypes.itemUpdate:
+                    this.addItem(payload);
+                    break;
             }
             for (const item of this.unbuilt_items) {
                 if (item.isVisible()) {

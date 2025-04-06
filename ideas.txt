@@ -1,0 +1,60 @@
+begin:
+  - find wood, stone, seeds
+  - plant manually
+  - use pinpins to do some slow automatisation
+ 
+
+
+
+end (demo):
+  - currency isn't money anymore (land? humans?)
+  - pinpins automate most low level things
+    - they breed and train automatically
+  - maybe game becomes sort of Risk-like strategy game?
+    - need solider pinpins
+	- maybe have like a tech tree?
+  - objective is conquering the island-nation that you live in (sterminating all humans?)
+
+--------------------------------------
+
+- start by manually looking around
+- build tent
+- start planting what seeds you find
+- keep exploring and planting until you either build an axe (expand garden) or find the merchant
+- sell wheat to the merchant
+- when you have enough money, buy pinpins and start automating
+- build house then castle
+- unlock a skill tree (for every tab?) (maybe each skill can be upgraded itself)
+ -> forest
+   -> merchant can sell explorer pinpins (etc)
+   -> merchant buys 10 wheat at a time (50, 100, etc)
+     -> merchant gives + 2% coins per wheat
+	
+ -> castle (unlocked when you have a castle)
+   -> every tile is made of 25 tiles 
+     (to automatically do an action on the tile, 25 pinpins need to act on it, etc)
+	 (it also takes x25 times to do anything on them, they're effectively 25 tiles in one)
+     -> every tile is made of 625 (etc, etc)
+   -> wheat grows faster (etc)
+   -> wheat has a +5% chance of remaining planted 
+     (not having to reuse a seed or preparing the ground)
+	 (% remains the same for bigger tiles too (doesn't scale))
+   
+ -> pinpins (unlocked when breeding pinpins)
+   -> farmer pinpins can plant carrots (carrots needs to be unlocked) (etc)
+   -> pinpins can train other pinpins to the same profession
+   -> can breed 2 specialised pinpins
+     -> if breeding two specialised pinpins they get (their level) +5% cps (+10%, +15%, etc)
+	 -> pinpins breed automatically
+	 -> pinpins grow faster
+	 -> can build pinpin villages (25 huts)
+	   -> can build pinpin cities (unlock next section of the game?)
+	     -> provinces??
+
+- learn how to breed pinpins
+ - take two pinpins and let them breed (takes n minutes)
+ - needs space (a hut?), build more space, do more breeding
+ - can only breed basic pinpins, which only make basic pinpins
+
+
+

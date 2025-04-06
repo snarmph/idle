@@ -1,5 +1,5 @@
-import { Resources, Items } from "script/enums.js"
-import { game } from "script/game.js"
+import { Resources, Items } from "src/enums.js"
+import { game } from "src/game.js"
 
 export class SaveData {
     constructor() {

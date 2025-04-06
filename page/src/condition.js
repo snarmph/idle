@@ -1,4 +1,4 @@
-import { game } from "script/game.js"
+import { game } from "src/game.js"
 
 export class Condition {
     constructor(condition, consequence = null) {
@@ -15,7 +15,7 @@ export class Condition {
             }
             return true;
         }
-        return false;
+        return this.is_unlocked;
     }
 
     setConsequence(consequence) {
@@ -32,31 +32,29 @@ export class Condition {
 }
 
 export class ResourceCondition extends Condition {
-    constructor(resources, onUnlocked = null, checkTotal = false) {
+    constructor(resources, on_unlocked = null, check_total = false) {
         super(
             () => {
                 for (const [k, v] of Object.entries(resources)) {
-                    const res = game.inventory.getResource(k);
-                    if (res === null) {
-                        return false;
-                    }
-
-                    if (checkTotal) {
-                        if (res.getTotal() < v) {
+                    if (check_total) {
+                        if (game.inventory.totalOf(k) < v) {
                             return false;
                         }
-                    }
-                    else if (res.get() < v) {
-                        return false;
+                    } 
+                    else {
+                        if (game.inventory.countOf(k) < v) {
+                            return false;
+                        }
                     }
                 }
                 return true;
             },
-            onUnlocked
-        );
+            on_unlocked
+        )
     }
 }
 
+/*
 export class ItemCondition extends Condition {
     constructor(items, onUnlocked = null) {
         super(
@@ -72,3 +70,4 @@ export class ItemCondition extends Condition {
         );
     }
 }
+*/

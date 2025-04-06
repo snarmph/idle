@@ -1,5 +1,4 @@
-import { make, tab_manager } from "script/ui.js";
-
+import { make, tab_manager } from "src/ui.js";
 
 export class BaseTab {
     constructor(id, name, show_cond = null) {

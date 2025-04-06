@@ -13,14 +13,14 @@ jobs:
           ref: dev
       - name: Copy files to temporary dir
         run: |
-          cp -r page/* ${{ runner.temp }}/
+          cp -r page/ ${{ runner.temp }}/
       - name: Checkout master branch
         uses: actions/checkout@v4
         with:
           ref: master
       - name: Copy files from temporary directory to master
         run: |
-          cp -r ${{ runner.temp }}/* .
+          cp -r ${{ runner.temp }}/page/* .
       - name: commit and push changes to master
         run: |
           git config --global user.email "snarmph@gmail.com"
