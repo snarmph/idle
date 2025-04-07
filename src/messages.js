@@ -4,6 +4,7 @@ export const MessageTypes = Object.freeze({
     houseUpgrade: 2,
     gardenUpdate: 3,
     pinpinUpdate: 4,
+    pinpinAction: 5,
 });
 
 class MsgList {

@@ -27,6 +27,7 @@
     border-color: var(--main-col);
     background-color: var(--background-col);
     border-bottom: none;
+    transition: background-color 0.5s linear;
 }
 .tab-active:hover {
     text-decoration: none;
@@ -37,7 +38,7 @@
     box-shadow: 0px 5px 15px var(--tooltip-shadow-col);
     border-top: none;
     border-radius: 0px 0px 10px 10px;
-    background-color: var(--background-col);
+    /* background-color: var(--background-col); */
     padding: 60px;
 }
 .tab-content-item {

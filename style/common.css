@@ -5,9 +5,18 @@ html, body {
     height: 100%;
     font-family: monospace;
 
+    --border: 1px solid var(--main-col);
+    --shadow: 0px 5px 15px var(--tooltip-shadow-col);
+    background-color: var(--background-col);
+    color: var(--main-col);
+
+    transition: color 0.5s linear;
+    transition: background-color 0.5s linear;
+}
+
+.dark-mode {
     --main-col: #dedcd6;
     --background-col: #191919;
-    --bgbg-col: #101010;
     --disabled-col: #444444;
     --tooltip-bg-col: #212124;    
     --tooltip-shadow-col: #0e0e0e;  
@@ -17,10 +26,18 @@ html, body {
     --green-col: #7bdc6d;
     --yellow-col: #dccb6d;
     --red-col: #dc776d;
+}
 
-    background-color: var(--bgbg-col);
-    background-color: var(--background-col);
-    color: var(--main-col);
+.light-mode {
+    --main-col: #191919;
+    --background-col: #fdeff5;
+    --disabled-col: #909197;
+    --tooltip-bg-col: #ffe5e5;    
+    --tooltip-shadow-col: #d5d5e3;  
+
+    --green-col:  #53ce40;
+    --yellow-col: #fd8e00;
+    --red-col: #e53131;
 }
 
 .content-container {
@@ -97,6 +114,7 @@ div[tooltip]:hover::after {
     font-size: 1.1em;
     left: 0.8em;
     top: -0.8em;
+    transition: background-color 0.5s linear;
 }
 
 /*** Buttons ************************************************/

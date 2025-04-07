@@ -3,21 +3,28 @@ import { BaseTab } from "src/ui/tab.js"
 import { Button } from "src/ui/button.js"
 import { game } from "src/game.js"
 import { Resources } from "src/inventory.js"
+import { PinpinType } from "src/village.js"
 import { addListener, MessageTypes } from "src/messages.js"
 import { HouseLevels, TileState } from "src/garden.js"
 import { Colours } from "src/log.js"
 import { formatRaw } from "src/utils/num.js"
 
+let house_animations = [];
+
 class TileButton extends Button {
     constructor(index, parent) {
         super(
-            `garden-tile-${index}`, parent, "tile-text", 1, () => {
-                this.nextState();
-            }
+            `garden-tile-${index}`, parent, "tile-text"
         )
+        this.count = 0;
+
         this.index = index;
         this.button.classList.add("garden-tile-button");
-        this.addOnClick(() => this.removeCost());
+
+        const tile = game.garden.tiles[this.index];
+        tile.on_start_cooldown = () => this.disable();
+        tile.on_step_cooldown = (alpha) => this.setCooldownBarWidth(alpha);
+        tile.on_end_cooldown = () => this.update();
         this.update();
     }
 
@@ -30,29 +37,14 @@ class TileButton extends Button {
             text += ` <span class="garden-tile-emoji" style="color: var(--${colour})">${state.icon.text}</span>`
         }
         this.setButtonContent(text);
-        this.setTimeout(state.time * 0.1);
 
-        if (tile.state === TileState.growing) {
-            this.click();
-        }
-
-        if (!tile.check()) {
-            this.disable();
-        }
+        if (!tile.check()) this.disable();
+        else               this.enable();
     }
 
-    removeCost() {
-        const tile = game.garden.tiles[this.index];
-        const state = TileState.fromIndex(tile.state);
-        if ("cost" in state) {
-            for (const [id, count] of Object.entries(state.cost)) {
-                game.inventory.remove(id, count);
-            }
-        }
-    }
-
-    nextState() {
-        game.garden.tiles[this.index].next();
+    /* override */
+    onClick() {
+        game.garden.tiles[this.index].tryNext();
     }
 }
 
@@ -65,7 +57,11 @@ export class GardenTab extends BaseTab {
             this.content_element
         );
 
+        this.level = null;
         this.tiles = [];
+
+        this.anim_index = 0;
+        this.anim_id = null;
 
         addListener(MessageTypes.houseUpgrade, (data) => {
             this.onHouseUpgrade(data.level);
@@ -116,19 +112,36 @@ export class GardenTab extends BaseTab {
                 }
             }
         )
+        addListener(
+            MessageTypes.pinpinAction,
+            (data) => {
+                if (data.type !== PinpinType.farmer) {
+                    return;
+                }
+                this.tiles[data.index].click();
+            }
+        )
     }
 
     /* overload */ 
     onSelected() {
-
+        ui.makeVisible(this.extra.parentElement);
+        this.anim_index = 0;
+        this.updateAnimation();
+        this.anim_id = setInterval(() => this.updateAnimation(), 500);
     }
 
     /* overload */ 
     onExitSelected() {
-
+        ui.makeInvisible(this.extra.parentElement);
+        clearInterval(this.anim_id);
+        this.anim_id = null;
+        this.anim_index = 0;
     }
 
     onHouseUpgrade(level) {
+        this.level = level;
+        this.anim_index = 0;
         this.updateName(HouseLevels.name(level));
         const old_len = this.tiles.length;
         const len = game.garden.tiles.length;
@@ -136,4 +149,99 @@ export class GardenTab extends BaseTab {
             this.tiles.push(new TileButton(i, this.tiles_elem));
         }
     }
+
+    updateAnimation() {
+        const anim = house_animations[this.level - 1];
+        this.extra.textContent = anim[this.anim_index];
+        this.anim_index = (this.anim_index + 1) % anim.length;
+    }
 }
+
+
+house_animations = [
+    [
+`
+      ______ 
+     /     /\\
+    /     /  \\
+   /_____/----\\_    )
+  "     "          (.
+ _ ___          o (:') o
+(@))_))        o ~/~~\\~ o
+                o  o  o 
+`,
+`
+      ______
+     /     /\\
+    /     /  \\
+   /_____/----\\_   .(
+  "     "          )
+ _ ___          o (:') o
+(@))_))        o ~/~~\\~ o
+                o  o  o
+` ,
+`
+      ______
+     /     /\\
+    /     /  \\      .
+   /_____/----\\_    )
+  "     "          (.
+ _ ___          o (:') o
+(@))_))        o ~/~~\\~ o
+                o  o  o
+` ,
+`
+      ______
+     /     /\\
+    /     /  \\
+   /_____/----\\_   .(
+  "     "          )
+ _ ___          o (:') o
+(@))_))        o ~/~~\\~ o
+                o  o  o
+` ,
+    ],
+    [
+`
+            (            
+             )           
+    ________|| ,%%&%,     
+   /\\     _   \\%&&%%&%  
+  /  \\___/^\\___\\%&%%&& 
+  |  | []   [] |%\\Y&%'   
+  |  |   .-.   | ||       
+~~@._|@@_|||_@@|~||~~~~~~~
+     \`""") )"""\`         
+`,
+`             
+             )          
+            (           
+    ________|| ,%%&%,     
+   /\\     _   \\%&&%%&%  
+  /  \\___/^\\___\\%&%%&& 
+  |  | []   [] |%\\Y&%'   
+  |  |   .-.   | ||       
+~~@._|@@_|||_@@|~||~~~~~~~
+     \`""") )"""\`         
+`,
+    ],
+    [
+`
+               T~~
+               |
+              /"\\
+      T~~     |'| T~~
+  T~~ |    T~ WWWW|
+  |  /"\\   |  |  |/\\T~~
+ /"\\ WWW  /"\\\\ |' |WW|
+WWWWW/\\| /   \\|'/\\|/"\\
+|   /__\\/]WWW[\\/__\\WWWW
+|"  WWWW'|I_I|'WWWW'  |
+|   |' |/  -  \\|' |'  |
+|'  |  |LI=H=LI|' |   |
+|   |' | |[_]| |  |'  |
+|   |  |_|###|_|  |   |
+'---'--'-/___\\-'--'---'
+`,
+    ],
+];  

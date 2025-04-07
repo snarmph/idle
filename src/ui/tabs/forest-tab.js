@@ -3,15 +3,15 @@ import { BaseTab } from "src/ui/tab.js"
 import { game } from "src/game.js"
 import { Resources } from "src/inventory.js"
 import { MessageTypes, addListener, removeListener, sendMsg } from "src/messages.js"
-import { Button, SellButton } from "src/ui/button.js"
+import { Button, SellButton, BuyPinpinButton } from "src/ui/button.js"
 import { formatResource } from "src/utils/num.js"
 import { HouseLevels } from "src/garden.js"
 import { ResourceCondition } from "src/condition.js"
 import { getRandomInt } from "src/utils/rand.js"
 import { Colours } from "src/log.js"
-import { formatRaw } from "src/utils/num.js"
+import { formatRaw, formatNumber } from "src/utils/num.js"
 import * as actions from "src/actions.js"
-import { Pinpin, PinpinType } from "../../village.js"
+import { Pinpin, PinpinType } from "src/village.js"
 
 let seller_animation = [];
 
@@ -137,7 +137,7 @@ export class ForestTab extends BaseTab {
             MessageTypes.resourceUpdate, 
             (data) => {
                 const res = this.res_data[data.id];
-                res.count.textContent = formatRaw(data.count);
+                res.count.textContent = formatNumber(data.count);
                 ui.makeVisible(res.container);
                 ui.makeVisible(this.categories.resources.element);
 
@@ -149,7 +149,7 @@ export class ForestTab extends BaseTab {
             MessageTypes.pinpinUpdate,
             (data) => {
                 const pin = this.pinpins_data[data.type];
-                pin.count.textContent = formatRaw(data.count);
+                pin.count.textContent = formatNumber(data.count);
                 ui.makeVisible(pin.container);
                 ui.makeVisible(this.categories.pinpins.element);
             }
@@ -181,7 +181,12 @@ export class ForestTab extends BaseTab {
                 new ResourceCondition(
                     { [Resources.money]: 10 },
                     () => {
-                        // this.seller.buttons.push();
+                        this.seller.buttons.push(new BuyPinpinButton(
+                            PinpinType.base,
+                            1,
+                            this.categories.seller.element
+                        ));
+                        game.log("You can now buy Pinpins!", Colours.green);
                     }
                 )
             ]
@@ -198,9 +203,14 @@ export class ForestTab extends BaseTab {
     }
 
     updateHouseButton() {
-        const upgrade_level = game.garden.house + 1;
-        const upgrade = HouseLevels.fromIndex(upgrade_level);
         const btn = this.buy_buttons.house_upgrade;
+        const upgrade_level = game.garden.house + 1;
+        if (upgrade_level >= HouseLevels.count()) {
+            btn.button.remove();
+            this.buy_buttons.house_upgrade = null;
+            return;
+        }
+        const upgrade = HouseLevels.fromIndex(upgrade_level);
 
         const show_cost = upgrade.show;
         const buy_cost = upgrade.cost;

@@ -1,4 +1,5 @@
 import { Resources } from "src/inventory.js"
+import { makeEnum } from "src/utils/enum.js"
 
 export function lerp(v0, v1, alpha) {
     return (1 - alpha) * v0 + alpha * v1;
@@ -56,20 +57,39 @@ function formatEveryThirdPower(notations) {
 	};
 }
 
-const num_formatters = [
-	formatEveryThirdPower(num_formats_short),
-	formatEveryThirdPower(num_formats_long),
-	formatRaw
-];
+export const NumFormatting = makeEnum({
+    short: {
+        name: "Short format",
+        func: formatEveryThirdPower(num_formats_short),
+    },
+    long: {
+        name: "Long format",
+        func: formatEveryThirdPower(num_formats_long),
+    },
+    raw: {
+        name: "Raw format",
+        func: formatRaw,
+    },
+})
 
-let num_formatter = 0;
+let num_format_type = NumFormatting.long;
+let num_formatter = NumFormatting.fromIndex(num_format_type);
+
+export function setNumberFormatter(index) {
+    num_format_type = index;
+    num_formatter = NumFormatting.fromIndex(num_format_type);
+}
+
+export function getNumberFormatter() {
+    return num_format_type;
+}
 
 export function formatNumber(num) {
-    return num_formatters[num_formatter](num);
+    return num_formatter.func(num);
 }
 
 export function formatCount(num) {
-    return (num > 0 ? "+" : "") + formatRaw(num);
+    return (num > 0 ? "+" : "") + formatNumber(num);
 }
 
 export function formatResource(resource, count) {

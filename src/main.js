@@ -1,10 +1,15 @@
 import { game, gameInit } from "src/game.js"
 import { Resources } from "src/inventory.js";
 import { PinpinType } from "./village.js";
+import { Colours } from "src/log.js"
 // import { MinionType } from "src/minion.js";
 
 export function main() {
     gameInit();
+
+    game.log("test text", Colours.red);
+    game.log("test text", Colours.yellow);
+    game.log("test text", Colours.green);
 
     // debug.give("wood", 500);
     // debug.give("seeds", 5);
