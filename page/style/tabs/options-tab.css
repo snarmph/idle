@@ -1,0 +1,34 @@
+.options {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.options .forest-item {
+    align-items: center;
+}
+
+.options-checkbox {
+    user-select: none;
+}
+
+.options-checkbox:hover {
+    background-color: var(--disabled-col);
+}
+
+select,
+::picker(select) {
+  appearance: base-select;
+}
+
+
+select {
+    border: var(--border);
+    background: var(--background-col);
+    color: var(--main-col);
+    padding: 10px;
+    width: auto;
+
+}
+  
+  

@@ -5,6 +5,7 @@ import { Resources } from "src/inventory.js"
 import { ResourceCondition } from "src/condition.js"
 import { game } from "src/game.js"
 import { sendMsg, MessageTypes } from "src/messages.js"
+import { Timer } from "src/utils/timer.js"
 
 export const HouseLevels = makeEnum({
     none: {
@@ -69,6 +70,7 @@ export const TileState = makeEnum({
     },
     growing: {
         name: "Growing",
+        autorun: true,
         time: 20,
     },
     ready: {
@@ -89,26 +91,53 @@ export class GardenTile {
         this.multiplier = 1;
         this.condition = null;
         this.listener_id = null;
+        this.timer = null;
+
+        this.on_start_cooldown = null;
+        this.on_step_cooldown = null;
+        this.on_end_cooldown = null;
     }
 
     check() {
-        if (!this.condition) {
-            return true;
-        }
+        if (this.timer && this.timer.is_running) return false;
+        if (!this.condition) return true;
         let unlocked = this.condition.step();
         this.condition.reset();
         return unlocked;
     }
 
-    next() {
-        let found = null;
+    tryNext() {
+        if (!this.check()) return false;
 
-        const old_state = TileState.fromIndex(this.state);
-        if ("cost" in old_state) {
-            for (const [id, count] of Object.entries(old_state.cost)) {
+        const state = TileState.fromIndex(this.state);
+
+        if ("cost" in state) {
+            for (const [id, count] of Object.entries(state.cost)) {
                 game.inventory.remove(id, count);
             }
         }
+
+        this.timer = new Timer(
+            state.time * 1000.0, 
+            this.on_step_cooldown,
+            () => {
+                this.timer = null;
+                this.next();
+                if (this.on_end_cooldown) {
+                    this.on_end_cooldown();
+                }
+            }
+        )
+        this.timer.start();
+        if (this.on_start_cooldown) {
+            this.on_start_cooldown();
+        }
+        
+        return true;
+    }
+
+    next() {
+        let found = null;
 
         this.state += 1;
         if (this.state >= TileState.count()) {
@@ -123,7 +152,12 @@ export class GardenTile {
         else {
             this.condition = null;
         }
+
         sendMsg(MessageTypes.gardenUpdate, { index: this.index, harvest: found });
+
+        if ("autorun" in state && state.autorun) {
+            this.tryNext();
+        }
     }
 
     harvest() {

@@ -1,6 +1,8 @@
 import { randomResources } from "src/utils/rand.js"
 import { Resources } from "src/inventory.js"
 import { game } from "src/game.js"
+import { sendMsg, MessageTypes } from "src/messages.js";
+import { PinpinType } from "src/village.js"
 
 export function exploreForest(pinpin_count = 1) {
     const found = randomResources({
@@ -38,8 +40,8 @@ export function trySell(count = 1, pinpin_count = 1) {
 
 export function farm(pinpin_count = 1) {
     for (const tile of game.garden.tiles) {
-        if (tile.check()) {
-            tile.next();
+        if (tile.tryNext()) {
+            sendMsg(MessageTypes.pinpinAction, { type: PinpinType.farmer, index: tile.index });
             pinpin_count--;
             if (pinpin_count === 0) {
                 return;

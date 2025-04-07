@@ -4,6 +4,8 @@ import { ResourceCondition } from "src/condition.js"
 import { MessageTypes, addListener } from "src/messages.js"
 import { Resources } from "src/inventory.js"
 import { game } from "src/game.js"
+import { PinpinType } from "../village.js"
+import { formatNumber } from "../utils/num.js"
 
 export class Button {
     constructor(id, parent, text, timeout_sec, onFinishedCallback) {
@@ -75,9 +77,13 @@ export class Button {
             this.finishCooldown();
             return;
         }
-        const cur = lerp(100, 0, alpha);
-        this.cooldown.setAttribute("style", `width: ${cur}%`)
+        this.setCooldownBarWidth(alpha);
         requestAnimationFrame((t) => this.cooldownStep(t));
+    }
+
+    setCooldownBarWidth(alpha) {
+        const width = lerp(100, 0, alpha);
+        this.cooldown.setAttribute("style", `width: ${width}%`);
     }
 
     finishCooldown() {
@@ -96,7 +102,7 @@ export class Button {
     }
 
     setTimeout(seconds) {
-        this.timeout = seconds * 1000.0 * 0.3;
+        this.timeout = seconds * 1000.0;
     }
 
     setTooltipText(text) {
@@ -171,6 +177,54 @@ export class SellButton extends Button {
             this.disable();
         });
         this.condition = new ResourceCondition({ [resource]: count });
+        addListener(MessageTypes.resourceUpdate, () => this.checkCondition());
+    }
+
+    checkCondition() {
+        if (this.condition.step()) {
+            this.condition.reset();
+            this.enable();
+        }
+        else {
+            this.disable();
+        }
+    }
+}
+
+
+export class BuyPinpinButton extends Button {
+    constructor(type, count, parent) {
+        const pinpin = PinpinType.fromIndex(type);
+        const pin_name = pinpin.name;
+
+        let name = "Buy ";
+        if (count === 1) name += "a";
+        else name += count;
+        name += ` ${pin_name}`;
+
+        super(
+            `buy-pinpin-button-${PinpinType.key(type)}`,
+            parent,
+            name,
+            0.,
+            () => {
+                this.checkCondition()
+            }
+        );
+
+        this.cost = pinpin.value * count;
+        this.setTooltip([
+            `+${formatNumber(count)} ${pinpin.name}`,
+            formatResource(Resources.money, this.cost),
+        ]);
+
+        this.cooldown.remove();
+        this.addOnClick(() => {
+            game.inventory.remove(Resources.money, this.cost);
+            game.village.add(type, count);
+            this.disable();
+        });
+        this.condition = new ResourceCondition({ [Resources.money]: this.cost });
         addListener(MessageTypes.resourceUpdate, () => this.checkCondition());
     }
 

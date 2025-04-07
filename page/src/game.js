@@ -1,13 +1,16 @@
+import { Logger, Colours }  from "src/log.js"
+import { TabManager } from "src/ui/tab.js";
+
 import { Inventory }  from "src/inventory.js";
 import { Garden }  from "src/garden.js";
-import { Logger, Colours }  from "src/log.js"
+import { Village } from "src/village.js"
+import { Options } from "src/options.js"
+import { SkillTree } from "src/skill-tree.js";
+
 import { ForestTab } from "src/ui/tabs/forest-tab.js"
 import { GardenTab } from "src/ui/tabs/garden-tab.js"
-import { TabManager } from "src/ui/tab.js";
-// import tab_manager  from "src/ui.js"
-// import { Village, MinionType } from "src/minion.js"
-import { Village } from "src/village.js"
-// import { VillageTab } from "tabs/minion-tab.js"
+import { OptionsTab } from "src/ui/tabs/options-tab.js"
+import { SkillTreeTab } from "src/ui/tabs/skilltree-tab.js";
 
 export class Game {
     constructor() {
@@ -16,19 +19,18 @@ export class Game {
         this.inventory = new Inventory();
         this.village = new Village();
         this.garden = new Garden();
+        this.options = new Options();
+        this.skill_tree = new SkillTree();
     }
 
     init() {
         this.tab_manager.add(new ForestTab());
         this.tab_manager.add(new GardenTab());
+        this.tab_manager.add(new OptionsTab());
+        this.tab_manager.add(new SkillTreeTab());
+
         this.tab_manager.setActive(ForestTab.getId());
-        // const forest_tab = new IdleTab();
-        // const garden_tab = new GardenTab();
-
-        // const village_tab = new VillageTab();
-
-        // tab_manager.setActive(forest_tab.tab_id);
-        // tab_manager.setActive(village_tab.tab_id);
+        this.tab_manager.setActive(SkillTreeTab.getId());
     }
 
     log(msg, color = Colours.default) {

@@ -1,0 +1,14 @@
+#content-skill-tree {
+    width: 100%;
+    height: 100%;
+    user-select: none;
+}
+
+.skill-item-container:hover {
+    cursor: pointer;
+}
+
+.skill-tree-grid {
+    width: 100%;
+    height: 100%;
+}
