@@ -17,6 +17,13 @@ end (demo):
 
 --------------------------------------
 
+TODO
+
+[ ] tooltip in skills should show which resources you have enough of
+[ ] exchange wood for wheat? (like 50 to 1)
+
+--------------------------------------
+
 [x] start by manually looking around
 [x] build tent
 [x] start planting what seeds you find

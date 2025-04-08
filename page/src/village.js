@@ -7,22 +7,26 @@ import * as actions from "src/actions.js"
 export const PinpinType = makeEnum({
     base: {
         name: "Stupid Pinpin",
-        value: 10,
+        action_name: "",
+        value: 5,
         speed: 5.0,
     },
     explorer: {
         name: "Explorer Pinpin",
-        value: 50,
+        action_name: "explore the wilderness",
+        value: 10,
         speed: 1.0,
     },
     seller: {
         name: "Seller Pinpin",
-        value: 100,
+        action_name: "sell some stuff",
+        value: 15,
         speed: 1.0,
     },
     farmer: {
         name: "Farmer Pinpin",
-        value: 300,
+        action_name: "farm",
+        value: 20,
         speed: 1.0,
     },
 })
@@ -31,6 +35,7 @@ export class Pinpin {
     constructor(type, count) {
         this.type = type;
         this.count = count;
+        this.total = count;
         this.interval_handle = null;
         this.speed = PinpinType.get(type, "speed");
         this.action = this.getActionForType(type);
@@ -44,17 +49,30 @@ export class Pinpin {
         );
     }
 
+    reset() {
+        clearInterval(this.interval_handle);
+    }
+
     add(count) {
-        const was_zero = this.count === 0;
         this.count += count;
-        if (was_zero) {
+        this.total += count;
+        if ((this.count - count) === 0) {
             this.setup();
+        }
+    }
+
+    remove(count) {
+        this.count -= count;
+        if (this.count < 0) console.error(`${PinpinType.name(this.type)} count is < 0: ${this.count}`);
+        if (this.count === 0) {
+            this.reset();
         }
     }
     
     actionBase() {
         const pinpin_type = getRandomInt(1, game.village.max_pinpin_level + 1);
         if (pinpin_type <= 0) return;
+        game.log(`${this.count} ${PinpinType.name(this.type)} decided to ${PinpinType.get(pinpin_type, "action_name")}`)
         const action = this.getActionForType(pinpin_type);
         action();
     }
@@ -91,15 +109,43 @@ export class Village {
         }
     }
 
+    init() {
+        
+    }
+
+    getSaveData() {
+        let data = {};
+        for (const [id, item] of Object.entries(this.pinpins)) {
+            if (item.total > 0) {
+                data[id] = {
+                    count: item.count,
+                    total: item.total,
+                }
+            }
+        }
+        return data;
+    }
+
+    loadSaveData(data) {
+        for (const [id, item] of Object.entries(data)) {
+            this.pinpins[id].total = item.total;
+            this.add(id, item.count);
+        }
+    }
+
     add(type, count = 1) {
-        console.log(">", PinpinType.name(type), type);
         if (type > this.max_pinpin_level) this.max_pinpin_level = type;
         this.pinpins[type].add(count);
         sendMsg(MessageTypes.pinpinUpdate, { type: type, count: this.pinpins[type].count });
     }
 
+    remove(type, count = 1) {
+        this.pinpins[type].remove(count);
+        sendMsg(MessageTypes.pinpinUpdate, { type: type, count: this.pinpins[type].count });
+    }
+
     countOf(type) {
-        return this.minions[type].count;
+        return this.pinpins[type].count;
     }
 
     count() {

@@ -40,7 +40,7 @@ function formatEveryThirdPower(notations) {
 		if (!isFinite(value)) {
             return "Infinity";
         }
-		if (value >= 1_000_000) {
+		if (value >= 10_000) {
 			value *= 0.001;
 			while(Math.round(value) >= 1000) {
 			    value *= 0.001;

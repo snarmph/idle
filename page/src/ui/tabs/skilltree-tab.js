@@ -2,13 +2,20 @@ import * as ui from "src/ui/base.js"
 import { BaseTab } from "src/ui/tab.js"
 import { game } from "src/game.js"
 import { SkillsData } from "src/skill-tree.js"
-import { Colours } from "src/log.js"
+import { formatNumber } from "src/utils/num.js"
+import { PinpinType } from "src/village.js"
+import { Resources } from "src/inventory.js"
+import { addListener, MessageTypes } from "../../messages.js"
 
 class SkillTab {
     constructor(element, skill) {
         this.element = element;
         this.skill = skill;
         this.connections = [];
+
+        this.element.addEventListener("click", () => {
+            this.skill.tryUnlock(true);
+        })
 
         skill.on_unlocked.push(() => this.update());
     }
@@ -21,9 +28,20 @@ class SkillTab {
         else if (this.skill.parent && this.skill.parent.unlocked) {
             new_class = "skill-visible";
         }
+        this.element.classList.remove("hidden");
+        this.element.classList.remove("skill-unlocked");
+        this.element.classList.remove("skill-visible");
+
         this.element.classList.add(new_class);
         for (const conn of this.connections) {
+            conn.classList.remove("hidden");
+            conn.classList.remove("skill-unlocked");
+            conn.classList.remove("skill-visible");
             conn.classList.add(new_class);
+        }
+
+        if (this.skill.unlocked) {
+
         }
     }
 }
@@ -49,28 +67,34 @@ export class SkillTreeTab extends BaseTab {
             s.update();
         }
 
-        const tooltip_container = ui.htmlFromStr(
-            `<div class="skill-tooltip"></div>`,
-            document.body
-        );
+        const tooltip_container = document.getElementById("tooltip");
 
         this.tooltip = {
             container: tooltip_container,
-            name: ui.htmlFromStr(`<div class="skill-tooltip-name"></div>`, tooltip_container),
-            desc: ui.htmlFromStr(`<div class="skill-tooltip-desc"></div>`, tooltip_container),
-            cost: ui.htmlFromStr(`<div class="skill-tooltip-cost"></div>`, tooltip_container),
-            setPos: (x, y) => {
-                tooltip_container.style.left = x + "px";
-                tooltip_container.style.top  = y + "px";
-            },
+            name: document.getElementById("tooltip-name"),
+            desc: document.getElementById("tooltip-desc"),
+            cost: document.getElementById("tooltip-cost"),
+            xpos: 0,
+            ypos: 0,
             setVisibility: (visible) => {
-                tooltip_container.style.opacity = visible ? "1.0" : "0.1";
+                tooltip_container.style.opacity = visible ? "1.0" : "0.0";
             },
-            height() {
-                return tooltip_container.clientHeight;
-            }
         };
 
+        this.tooltip.setPos = (x, y) => {
+            this.tooltip.xpos = x;
+            this.tooltip.ypos = y;
+        }
+
+        this.tooltip.update = () => {
+            const off_y = tooltip_container.clientHeight + 15;
+            const off_x = -5;
+
+            let posx = this.tooltip.xpos - off_x;
+            let posy = this.tooltip.ypos - off_y;
+            tooltip_container.style.left = posx + "px";
+            tooltip_container.style.top  = posy + "px";
+        }
     }
 
     addSkill(id, x, y, icon) {
@@ -82,46 +106,81 @@ export class SkillTreeTab extends BaseTab {
             </span>`,
             this.grid
         );
-        element.addEventListener("mouseover", () => this.is_hovering = true);
-        element.addEventListener("mouseout", () => this.is_hovering = false);
         const len = this.skills.push(new SkillTab(element, game.skill_tree.get(id)));
-        return len - 1;
+        element.addEventListener("mouseover", () => this.hoverSkill(this.skills[len - 1].skill));
+        element.addEventListener("mouseout", () => this.is_hovering = false);
+        return this.skills[len - 1];
     }
 
 
-    addConnection(x, y, is_vertical, parent_index) {
+    addConnection(x, y, is_vertical, skill) {
         const element = ui.htmlFromStr(
             `<span class="skill-connection" style="grid-column:${x+1};grid-row:${y+1}">
                 ${ is_vertical ? "&nbsp;│&nbsp;" : "───" }
             </span>`,
             this.grid
         );
-        this.skills[parent_index].connections.push(element);
+        skill.connections.push(element);
     }
 
     addSkillCell(key, skill, parent) {
-        const index = this.addSkill(key, skill.x, skill.y, skill.icon);
+        const new_skill = this.addSkill(key, skill.x, skill.y, skill.icon);
 
         if (parent) {
             let is_vertical = false;
             let x = skill.x;
             let y = skill.y;
 
-            if (parent.x === skill.x) {
+            if (parent.skill.data.x === skill.x) {
                 is_vertical = true;
-                y = parent.y + Math.sign(skill.y - parent.y);
+                y = parent.skill.data.y + Math.sign(skill.y - parent.skill.data.y);
             }
             else {
-                x = parent.x + Math.sign(skill.x - parent.x);
+                x = parent.skill.data.x + Math.sign(skill.x - parent.skill.data.x);
             }
 
-            this.addConnection(x, y, is_vertical, index);
+            this.addConnection(x, y, is_vertical, new_skill);
         }
 
         if ("children" in skill) {
             for (const [id, child] of Object.entries(skill.children)) {
-                this.addSkillCell(id, child, skill);
+                this.addSkillCell(id, child, new_skill);
             }
+        }
+    }
+
+    hoverSkill(skill) {
+        this.is_hovering = true;
+        this.tooltip.name.textContent = skill.name;
+        this.tooltip.desc.textContent = skill.desc;
+        this.tooltip.cost.replaceChildren();
+
+        if (skill.finished_upgrading) {
+            this.tooltip.desc.textContent = "Unlocked";
+            return;
+        }
+
+        for (const [id, count] of Object.entries(skill.cost.resources)) {
+            let has = game.inventory.countOf(id) >= count;
+            ui.htmlFromStr(`
+                <div class="tooltip-cost-item ${has ? "tooltip-cost-available" : ""}">
+                    <div class="tooltip-cost-count">-${formatNumber(count)}</div>
+                    <div class="tooltip-cost-name">${Resources.name(id)}</div>
+                </div>
+                `,
+                this.tooltip.cost
+            );
+        }
+        for (const [id, count] of Object.entries(skill.cost.pinpins)) {
+            let has = game.village.countOf(id) >= count;
+            ui.htmlFromStr(`
+                <div class="tooltip-cost-item ${has ? "tooltip-cost-available" : ""}">
+                    <div class="tooltip-cost-count">-${formatNumber(count)}</div>
+                    <div class="tooltip-cost-name">${PinpinType.name(id)}</div>
+                </div>
+                `,
+                this.tooltip.cost
+            );
         }
     }
 
@@ -131,13 +190,8 @@ export class SkillTreeTab extends BaseTab {
             return;
         }
 
-        const off_y = this.tooltip.height() + 15;
-        const off_x = -5;
-
-        let posx = event.clientX - off_x;
-        let posy = event.clientY - off_y;
-
-        this.tooltip.setPos(posx, posy);
+        this.tooltip.setPos(event.clientX, event.clientY);
+        this.tooltip.update();
         this.tooltip.setVisibility(true);
     }
 
@@ -149,6 +203,13 @@ export class SkillTreeTab extends BaseTab {
     /* overload */ 
     onInit() {
         this.show();
+        addListener(MessageTypes.skillUnlocked, (skill) => {
+            for (const item of this.skills) {
+                item.update();
+            }
+            this.hoverSkill(skill);
+            this.tooltip.update();
+        })
     }
 
     /* overload */ 

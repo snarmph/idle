@@ -54,20 +54,21 @@ export class ResourceCondition extends Condition {
     }
 }
 
-/*
-export class ItemCondition extends Condition {
-    constructor(items, onUnlocked = null) {
+export class SkillCondition extends Condition {
+    constructor(key, on_unlocked) {
         super(
-            () => {
-                for (const [k, v] of Object.entries(items)) {
-                    if (game.inventory.getItem(k).upgrade < v) {
-                        return false;
-                    }
-                    return true;
-                }
-            },
-            onUnlocked
+            () => this.skill_unlocked,
+            () => on_unlocked(game.skill_tree.get(key))
         );
+        this.skill_unlocked = false;
+        game.skill_tree.watchSkill(key, () => {
+            this.skill_unlocked = true;
+            if (this.step()) {
+                const skill = game.skill_tree.get(key);
+                if (!skill.finished_upgrading) {
+                    this.reset();
+                }
+            }
+        });
     }
 }
-*/

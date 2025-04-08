@@ -75,10 +75,10 @@ export class GardenTab extends BaseTab {
 
     /* overload */ 
     onInit() {
-        game.garden.upgrade();
-        game.garden.upgrade();
-        game.garden.upgrade();
-        this.show();
+        //game.garden.upgrade();
+        //game.garden.upgrade();
+        //game.garden.upgrade();
+        //this.show();
     }
 
     /* overload */ 
@@ -140,6 +140,9 @@ export class GardenTab extends BaseTab {
     }
 
     onHouseUpgrade(level) {
+        if (level === HouseLevels.tent) {
+            this.show();
+        }
         this.level = level;
         this.anim_index = 0;
         this.updateName(HouseLevels.name(level));

@@ -22,7 +22,7 @@ export class OptionsTab extends BaseTab {
 
     /* overload */ 
     onInit() {
-        this.show();
+        // this.show();
     }
 
     /* overload */ 
