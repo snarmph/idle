@@ -1,9 +1,10 @@
 import { makeEnum } from "src/utils/enum.js"
 import { PinpinType } from "src/village.js";
 import { Resources } from "src/inventory.js"
+import { Colours } from "src/log.js"
+import { game } from "src/game.js"
 
 /*
-
 forest:
   - merchant can sell X pinpins
   - merchant buys X crops at a time
@@ -53,16 +54,18 @@ pinpins:
 
 */
 
-export const Skills = Object.freeze({
+export const SkillsData = Object.freeze({
     base: {
         name: "You",
         icon: "@",
+        icon_colour: Colours.default,
         x: 2, y: 4,
         children: {
             forest: {
                 name: "Forest Skills",
                 desc: "Unlock forest-related skills",
                 icon: "f",
+                icon_colour: Colours.green,
                 x: 2, y: 2,
                 cost: {
                     resources: {
@@ -80,6 +83,7 @@ export const Skills = Object.freeze({
                         name: "Exotic Merchant",
                         desc: `Merchant can now sell ${PinpinType.name(PinpinType.explorer)}`,
                         icon: "m",
+                        icon_colour: Colours.red,
                         x: 0, y: 2,
                         cost: {
                             resources: {
@@ -111,6 +115,7 @@ export const Skills = Object.freeze({
                         name: "Rich Merchant",
                         desc: "The Merchant now buys 10x crops at a time",
                         icon: "c",
+                        icon_colour: Colours.yellow,
                         x: 2, y: 0,
                         cost: {
                             resources: {
@@ -140,6 +145,7 @@ export const Skills = Object.freeze({
                                 name: "Generous Merchant",
                                 desc: "The Merchant now buys crops at +5% per crop",
                                 icon: "g",
+                                icon_colour: Colours.yellow,
                                 x: 0, y: 0,
                                 cost: {
                                     resources: {
@@ -185,6 +191,7 @@ export const Skills = Object.freeze({
                 name: "Castle Skills",
                 desc: "Unlock castle-related skills",
                 icon: "c",
+                icon_colour: Colours.blue,
                 x: 4, y: 4,
                 cost: {
                     resources: {
@@ -198,6 +205,7 @@ export const Skills = Object.freeze({
                         name: "The Great Garden",
                         desc: "Every garden tile is now equivalent to 25x garden tiles, you'll need 25x the seeds and 25x the pinpins too",
                         icon: "t",
+                        icon_colour: Colours.green,
                         x: 4, y: 2,
                         cost: {
                             resources: {
@@ -213,6 +221,7 @@ export const Skills = Object.freeze({
                         name: "Fertilizer",
                         desc: "Crops grow +5% faster",
                         icon: "g",
+                        icon_colour: Colours.yellow,
                         x: 4, y: 6,
                         cost: {
                             resources: {
@@ -258,6 +267,7 @@ export const Skills = Object.freeze({
                                 name: "Lucky Seed",
                                 desc: "Crops have a +5% chance of leaving seeds planted",
                                 icon: "f",
+                                icon_colour: Colours.green,
                                 x: 6, y: 6,
                                 cost: {
                                     resources: {
@@ -303,6 +313,7 @@ export const Skills = Object.freeze({
                 name: "Pinpin Skills",
                 desc: "Make your pinpins special",
                 icon: "p",
+                icon_colour: Colours.purple,
                 x: 2, y: 6,
                 cost: {
                     pinpins: {
@@ -314,6 +325,7 @@ export const Skills = Object.freeze({
                         name: "Pinpin Hut",
                         desc: "Build a hut for pinpins, every hut can store x3 pinpins",
                         icon: "h",
+                        icon_colour: Colours.yellow,
                         x: 0, y: 6,
                         cost: {
                             resources: {
@@ -370,6 +382,7 @@ export const Skills = Object.freeze({
                                 name: "Get a room",
                                 desc: `Each couple of ${PinpinType.name(PinpinType.base)} have a 5% chance of breeding and creating another ${PinpinType.name(PinpinType.base)} every 5 seconds`,
                                 icon: "b",
+                                icon_colour: Colours.red,
                                 x: 0, y: 8,
                                 cost: {
                                     pinpins: {
@@ -407,6 +420,7 @@ export const Skills = Object.freeze({
                                         name: "Strong genetics",
                                         desc: "Any pair of specialised pinpins have a 5% chance of breeding every 10 seconds",
                                         icon: "s",
+                                        icon_colour: Colours.blue,
                                         x: 2, y: 8,
                                         cost: {
                                             pinpins: {
@@ -462,6 +476,7 @@ export const Skills = Object.freeze({
                                                 name: "Strong genetics",
                                                 desc: "When breeding 2 specialised pinpins, there's a 5% chance that their offspring will have a +5% efficency boost",
                                                 icon: "g",
+                                                icon_colour: Colours.green,
                                                 x: 4, y: 8,
                                                 cost: {
                                                     resources: {
@@ -540,57 +555,92 @@ export const Skills = Object.freeze({
     },
 });
 
+export class Skill {
+    constructor(id, skill, parent) {
+        this.id = id;
+        this.parent = parent;
+        this.data = skill;
+        this.upgrade = 0;
+        this.unlocked = false;
+        this.finished_upgrading = false;
+
+        this.name = skill.name;
+        this.desc = skill.desc;
+        this.cost = skill.cost;
+
+        this.on_unlocked = [];
+    }
+
+    tryUnlock() {
+        if (!this.checkCost() || this.finished_upgrading) {
+            return false;
+        }
+        this.unlocked = true;
+        this.upgrade += 1;
+        if (this.data.upgrades) {
+            if (this.data.upgrades.length <= this.upgrade) {
+                this.finished_upgrading = true;
+            }
+            else {
+                const upgrade = this.data.upgrades[this.upgrade];
+                
+                if ("name" in upgrade) this.name = upgrade.name;
+                if ("desc" in upgrade) this.desc = upgrade.desc;
+                if ("cost" in upgrade) this.cost = upgrade.cost;
+            }
+        }
+
+        for (const func of this.on_unlocked) {
+            func();
+        }
+
+        return true;
+    }
+
+    checkCost() {
+        if (!this.cost) {
+            return true;
+        }
+
+        if ("resources" in this.cost) {
+            for (const [id, count] of Object.entries(cost.resources)) {
+                if (game.inventory.countOf(id) < count) {
+                    return false;
+                }
+            }
+        }
+        if ("pinpins" in this.cost) {
+            for (const [id, count] of Object.entries(cost.pinpins)) {
+                if (game.village.countOf(id) < count) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+}
+
 export class SkillTree {
     constructor() {
-        this.width = 8;
+        this.width = 7;
         this.height = 9;
-        /*
-        this.width = 8 * 3;
-        this.height = 9;
+        this.skills = [];
 
-        const size = this.width * this.height;
-        
-        this.string = new Array(size);
-        for (let i = 0; i < size; ++i) {
-            this.string[i] = " ";
-        }
-        for (let y = 0; y < this.height; ++y) {
-            this.string[y * this.width - 1] = "\n";
-        }
-
-        this.addSkill(Skills.base, null);
-
-        console.log(this.string.join(""));
-        */
+        this.addSkill(SkillsData.base, "base", null);
+        this.skills["base"].tryUnlock();
     }
 
-    fillCell(x, y, content) {
-        const index = (x * 3) + y * this.width;
-        this.string[index + 0] = content[0];
-        this.string[index + 1] = content[1];
-        this.string[index + 2] = content[2];
+    get(id) {
+        return this.skills[id];
     }
 
-    addSkill(skill, parent) {
-        this.fillCell(skill.x, skill.y, `[${skill.icon}]`);
-
-        if (parent) {
-            // vertical line
-            if (parent.x === skill.x) {
-                const y = parent.y + Math.sign(skill.y - parent.y);
-                this.fillCell(skill.x, y, " │ ");
-            }
-            // horizontal line
-            else {
-                const x = parent.x + Math.sign(skill.x - parent.x);
-                this.fillCell(x, skill.y, "───");
-            }
-        }
-
+    addSkill(skill, key, parent) {
+        const new_skill = new Skill(key, skill, parent);
+        this.skills[key] = new_skill
 
         if ("children" in skill) {
-            for (const [_, child] of Object.entries(skill.children)) {
-                this.addSkill(child, skill);
+            for (const [id, child] of Object.entries(skill.children)) {
+                this.addSkill(child, id, new_skill);
             }
         }
     }

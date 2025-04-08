@@ -26,6 +26,8 @@ html, body {
     --green-col: #7bdc6d;
     --yellow-col: #dccb6d;
     --red-col: #dc776d;
+    --purple-col: purple;
+    --blue-col: blue;
 }
 
 .light-mode {
