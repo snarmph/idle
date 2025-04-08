@@ -7,10 +7,6 @@ import { Colours } from "src/log.js"
 export function main() {
     gameInit();
 
-    game.log("test text", Colours.red);
-    game.log("test text", Colours.yellow);
-    game.log("test text", Colours.green);
-
     // debug.give("wood", 500);
     // debug.give("seeds", 5);
     // debug.give("wheat", 500);
@@ -33,6 +29,16 @@ window.addEventListener("load", () => {
         if (pin !== undefined) {
             game.village.add(pin, count);
         }
+    }
+    debug.save = () => {
+        game.save();
+    }
+    debug.load = () => {
+        game.load();
+    }
+    debug.clearSave = () => {
+        game.save_data.clear();
+        location.reload();
     }
     main();
 })

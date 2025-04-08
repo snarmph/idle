@@ -3,17 +3,17 @@ import { BaseTab } from "src/ui/tab.js"
 import { game } from "src/game.js"
 import { Resources } from "src/inventory.js"
 import { MessageTypes, addListener, removeListener, sendMsg } from "src/messages.js"
-import { Button, SellButton, BuyPinpinButton } from "src/ui/button.js"
+import { Button, ExchangeResButton, SellButton, BuyButton, BuyPinpinButton } from "src/ui/button.js"
 import { formatResource } from "src/utils/num.js"
 import { HouseLevels } from "src/garden.js"
-import { ResourceCondition } from "src/condition.js"
+import { Condition, ResourceCondition, SkillCondition } from "src/condition.js"
 import { getRandomInt } from "src/utils/rand.js"
 import { Colours } from "src/log.js"
 import { formatRaw, formatNumber } from "src/utils/num.js"
 import * as actions from "src/actions.js"
 import { Pinpin, PinpinType } from "src/village.js"
-
-let seller_animation = [];
+import { SkillTreeTab } from "src/ui/tabs/skilltree-tab.js"
+import { Seller } from "../../seller.js"
 
 export class ForestTab extends BaseTab {
     constructor() {
@@ -39,7 +39,6 @@ export class ForestTab extends BaseTab {
         this.categories = {
             resources: new ui.Category("forest-resources", this.data_elem, "Resources"),
             pinpins: new ui.Category("forest-pinpins", this.data_elem, "Pinpins"),
-            seller: new ui.Category("forest-seller", this.grid_elem, "Seller"),
         }
 
         for (const [_, cat] of Object.entries(this.categories)) {
@@ -133,6 +132,22 @@ export class ForestTab extends BaseTab {
         this.house_condition = null;
         this.updateHouseButton();
 
+        this.skill_condition = new Condition(
+            () => {
+                if (game.village.countOf(PinpinType.base) < 3) {
+                    return false;
+                }
+                if (game.garden.house < HouseLevels.house) {
+                    return false;
+                }
+                return true;
+            },
+            () => {
+                game.tab_manager.show(SkillTreeTab.getId());
+                game.log("A witch appears and offers you great abilities, in exchange for a prize", Colours.yellow);
+            }
+        );
+
         addListener(
             MessageTypes.resourceUpdate, 
             (data) => {
@@ -152,62 +167,43 @@ export class ForestTab extends BaseTab {
                 pin.count.textContent = formatNumber(data.count);
                 ui.makeVisible(pin.container);
                 ui.makeVisible(this.categories.pinpins.element);
+
+                this.skill_condition.step();
+            }
+        )
+
+        this.house_listener = addListener(
+            MessageTypes.houseUpgrade,
+            () => {
+                this.updateHouseButton();
+                this.skill_condition.step();
             }
         )
 
         // == SELLER ==================================
 
-        this.seller = {
-            visible: false,
-            timer: null,
-            listen_id: null,
-            buttons: [],
-            conditions: [
-                new ResourceCondition(
-                    { [Resources.wheat]: 20 },
-                    () => {
-                        if (this.is_active) {
-                            this.showSeller();
-                        }
-                        this.seller.visible = true;
-                        this.seller.buttons.push(new SellButton(
-                            Resources.wheat, 5,
-                            this.categories.seller.element
-                        ));
-                        game.log("A merchant has appeared", Colours.yellow);
-                        sendMsg(MessageTypes.eventUpdate);
-                    }
-                ),
-                new ResourceCondition(
-                    { [Resources.money]: 10 },
-                    () => {
-                        this.seller.buttons.push(new BuyPinpinButton(
-                            PinpinType.base,
-                            1,
-                            this.categories.seller.element
-                        ));
-                        game.log("You can now buy Pinpins!", Colours.green);
-                    }
-                )
-            ]
-        }
+        this.seller = new Seller(this.grid_elem);
 
-        this.seller.listen_id = addListener(
-            MessageTypes.resourceUpdate,
+        addListener(
+            MessageTypes.eventUpdate, 
             (data) => {
-                this.updateSellerConditions();
+                if (data === "show-seller") {
+                    this.showSeller();
+                }
             }
-        );
-
-        this.updateSellerConditions();
+        )
     }
 
     updateHouseButton() {
         const btn = this.buy_buttons.house_upgrade;
         const upgrade_level = game.garden.house + 1;
         if (upgrade_level >= HouseLevels.count()) {
-            btn.button.remove();
+            removeListener(MessageTypes.houseUpgrade, this.house_listener);
+            if (btn) {
+                btn.button.remove();
+            }
             this.buy_buttons.house_upgrade = null;
+            this.house_condition = null;
             return;
         }
         const upgrade = HouseLevels.fromIndex(upgrade_level);
@@ -282,71 +278,11 @@ export class ForestTab extends BaseTab {
 
     showSeller() {
         ui.makeVisible(this.extra.parentElement);
-        ui.makeVisible(this.categories.seller.element);
-        this.animateSeller();
-    }
-
-    updateSellerConditions() {
-        if (this.seller.conditions.length === 0) {
-            removeListener(MessageTypes.resourceUpdate, this.seller.listen_id);
-            this.seller.listen_id = null;
-            return;
-        }
-        const cond = this.seller.conditions[0];
-        if (cond.step()) {
-            this.seller.conditions.shift();
-        }
+        ui.makeVisible(this.seller.category.element);
+        this.seller.animate();
+        // this.animateSeller();
     }
 
     animateSeller() {
-        this.extra.textContent = seller_animation[0];
-        const timeout = getRandomInt(5000, 10000);
-        clearTimeout(this.seller.timer);
-        this.seller.timer = setTimeout(
-            () => {
-                clearTimeout(this.seller.timer);
-                this.extra.textContent = seller_animation[1];
-                this.seller.timer = setTimeout(
-                    () => {
-                        this.animateSeller();
-                    },
-                    100
-                );
-            },
-            timeout
-        );
     }
 }
-
-seller_animation = [
-`
-          _.-""""-._
-         /.-......-.\\
-        //          \\\\
-        ||          ||
-        ||.--    --.||
-        /|  . || .  |\\
-        \\    (__)    /
-         |  ,____,  |
-          \\  \`--'  /
-       _./\`'.____.'\`\\._
-   _.::::|  |    |  |::::._
- .::::::::\\  \\  /  /::::::::.
-/:::::::::::|/:\\/:\\|::::::::::\\
-`,
-`
-          _.-""""-._
-         /.-......-.\\
-        //          \\\\
-        ||          ||
-        ||.--    --.||
-        /| __ || __ |\\
-        \\    (__)    /
-         |  ,____,  |
-          \\  \`--'  /
-       _./\`'.____.'\`\\._
-   _.::::|  |    |  |::::._
- .::::::::\\  \\  /  /::::::::.
-/:::::::::::|/:\\/:\\|::::::::::\\
-`
-]

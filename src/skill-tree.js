@@ -3,6 +3,7 @@ import { PinpinType } from "src/village.js";
 import { Resources } from "src/inventory.js"
 import { Colours } from "src/log.js"
 import { game } from "src/game.js"
+import { MessageTypes, sendMsg } from "src/messages.js";
 
 /*
 forest:
@@ -32,25 +33,6 @@ pinpins:
 6 || [h]───[p]   [g]───[f] || 
 7 ||  │                    || 
 8 || [b]───[s]───[g]       || 
-
-
-<span class="skill-item-container">
-    <span id="${skill-id}" class="skill-item">
-        [
-        <span class="skill-icon" style="color: red">g</span>
-        ]
-    </span>
-</span>
-
-[g]───[c]              
-       │               
-[m]───[f]   [t]        
-       │     │         
-      [@]───[c]        
-       │     │         
-[h]───[p]   [g]───[f]  
- │                     
-[b]───[s]───[g]         
 
 */
 
@@ -99,7 +81,7 @@ export const SkillsData = Object.freeze({
                                     resources: {
                                         [Resources.money]: 30,
                                     },
-                                },
+                            },
                             },
                             {
                                 desc: `Merchant can now sell ${PinpinType.name(PinpinType.farmer)}`,
@@ -201,7 +183,7 @@ export const SkillsData = Object.freeze({
                     }
                 },
                 children: {
-                    tiles: {
+                    garden_tiles: {
                         name: "The Great Garden",
                         desc: "Every garden tile is now equivalent to 25x garden tiles, you'll need 25x the seeds and 25x the pinpins too",
                         icon: "t",
@@ -559,61 +541,88 @@ export class Skill {
     constructor(id, skill, parent) {
         this.id = id;
         this.parent = parent;
+        this.children = [];
         this.data = skill;
-        this.upgrade = 0;
+        this.upgrade = -1;
         this.unlocked = false;
         this.finished_upgrading = false;
 
+        if (parent) {
+            parent.children.push(this);
+        }
+
         this.name = skill.name;
         this.desc = skill.desc;
-        this.cost = skill.cost;
+        this.cost = {
+            resources: {},
+            pinpins: {},
+        };
+        if (skill.cost) {
+            if ("resources" in skill.cost) {
+                this.cost.resources = skill.cost.resources;
+            }
+            if ("pinpins" in skill.cost) {
+                this.cost.pinpins = skill.cost.pinpins;
+            }
+        }
 
         this.on_unlocked = [];
     }
 
-    tryUnlock() {
-        if (!this.checkCost() || this.finished_upgrading) {
+    updateUpgradeData() {
+        this.finished_upgrading = true;
+        if (this.data.upgrades && this.data.upgrades.length > this.upgrade) {
+            this.finished_upgrading = false;
+            const upgrade = this.data.upgrades[this.upgrade];
+            if ("name" in upgrade) this.name = upgrade.name;
+            if ("desc" in upgrade) this.desc = upgrade.desc;
+            if ("cost" in upgrade) {
+                this.cost.resources = "resources" in upgrade.cost 
+                    ? upgrade.cost.resources 
+                    : {};
+                    
+                this.cost.pinpins = "pinpins" in upgrade.cost 
+                    ? upgrade.cost.pinpins 
+                    : {};
+            }
+        }
+    }
+
+    tryUnlock(force = false) {
+        if (!force && (!this.checkCost() || this.finished_upgrading)) {
             return false;
         }
+
+        for (const [id, count] of Object.entries(this.cost.resources)) {
+            game.inventory.remove(id, count);
+        }
+        
+        for (const [id, count] of Object.entries(this.cost.pinpins)) {
+            game.village.remove(id, count);
+        }
+
         this.unlocked = true;
         this.upgrade += 1;
-        if (this.data.upgrades) {
-            if (this.data.upgrades.length <= this.upgrade) {
-                this.finished_upgrading = true;
-            }
-            else {
-                const upgrade = this.data.upgrades[this.upgrade];
-                
-                if ("name" in upgrade) this.name = upgrade.name;
-                if ("desc" in upgrade) this.desc = upgrade.desc;
-                if ("cost" in upgrade) this.cost = upgrade.cost;
-            }
-        }
+        this.updateUpgradeData();
 
         for (const func of this.on_unlocked) {
             func();
         }
 
+        sendMsg(MessageTypes.skillUnlocked, this);
+
         return true;
     }
 
     checkCost() {
-        if (!this.cost) {
-            return true;
-        }
-
-        if ("resources" in this.cost) {
-            for (const [id, count] of Object.entries(cost.resources)) {
-                if (game.inventory.countOf(id) < count) {
-                    return false;
-                }
+        for (const [id, count] of Object.entries(this.cost.resources)) {
+            if (game.inventory.countOf(id) < count) {
+                return false;
             }
         }
-        if ("pinpins" in this.cost) {
-            for (const [id, count] of Object.entries(cost.pinpins)) {
-                if (game.village.countOf(id) < count) {
-                    return false;
-                }
+        for (const [id, count] of Object.entries(this.cost.pinpins)) {
+            if (game.village.countOf(id) < count) {
+                return false;
             }
         }
         return true;
@@ -624,10 +633,43 @@ export class SkillTree {
     constructor() {
         this.width = 7;
         this.height = 9;
-        this.skills = [];
+        this.skills = {};
 
         this.addSkill(SkillsData.base, "base", null);
         this.skills["base"].tryUnlock();
+    }
+
+    init() {
+        
+    }
+
+    getSaveData() {
+        let data = {};
+
+        for (const [name, skill] of Object.entries(this.skills)) {
+            if (name === "base") continue;
+            if (skill.unlocked) {
+                data[name] = {
+                    upgrade: skill.upgrade,
+                }
+            }
+        }
+        return data;
+    }
+
+    loadSaveData(data) {
+        for (const [name, item] of Object.entries(data)) {
+            const skill = this.skills[name];
+            skill.unlocked = true;
+            skill.upgrade = item.upgrade;
+            skill.updateUpgradeData();
+
+            for (const func of skill.on_unlocked) {
+                func();
+            }
+    
+            sendMsg(MessageTypes.skillUnlocked, skill);
+        }
     }
 
     get(id) {
@@ -643,5 +685,9 @@ export class SkillTree {
                 this.addSkill(child, id, new_skill);
             }
         }
+    }
+
+    watchSkill(key, callback) {
+        this.skills[key].on_unlocked.push(callback);
     }
 }

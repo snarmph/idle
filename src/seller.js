@@ -1,0 +1,213 @@
+import { game } from "src/game.js"
+import { sendMsg, MessageTypes, addListener, removeListener } from "src/messages.js"
+import * as ui from "src/ui/base.js"
+import { ResourceCondition, SkillCondition } from "src/condition.js";
+import { Resources } from "src/inventory.js";
+import { SellButton, ExchangeResButton, BuyPinpinButton  } from "src/ui/button.js";
+import { PinpinType } from "src/village.js";
+import { Colours } from "src/log.js"
+import { getRandomInt } from "src/utils/rand.js"
+import { Skill } from "./skill-tree.js";
+
+let seller_animation = [];
+
+export class Seller {
+    constructor(parent) {
+        this.visible = false;
+        this.timer = null;
+        this.listen_id = null;
+
+        this.value_mul = {
+            [Resources.wheat]: 1,
+        };
+        
+        this.extra = document.getElementById("extra");
+        this.category = new ui.Category("seller", parent, "Seller");
+        ui.makeInvisible(this.category.element);
+
+        this.buttons = {};
+        this.conditions = [];
+
+        this.setupConditions();
+    }
+
+    step() {
+        if (this.conditions.length === 0) {
+            removeListener(MessageTypes.resourceUpdate, this.listen_id);
+            this.listen_id = null;
+            return;
+        }
+        while (this.conditions.length > 0) {
+            const cond = this.conditions[0];
+            if (!cond.step()) {
+                break;
+            }
+            this.conditions.shift();
+        }
+    }
+
+    animate() {
+        this.extra.textContent = seller_animation[0];
+        const timeout = getRandomInt(5000, 10000);
+        clearTimeout(this.timer);
+        this.timer = setTimeout(
+            () => {
+                clearTimeout(this.timer);
+                this.extra.textContent = seller_animation[1];
+                this.timer = setTimeout(
+                    () => {
+                        this.animate();
+                    },
+                    100
+                );
+            },
+            timeout
+        );
+    }
+
+    setupConditions() {
+        this.conditions = [
+            new ResourceCondition(
+                { [Resources.wheat]: 10 },
+                () => {
+                    this.visible = true;
+                    this.buttons.sell_wheat = new SellButton(
+                        Resources.wheat, 5,
+                        this.category.element
+                    );
+                    this.buttons.stone_for_wood = new ExchangeResButton(
+                        Resources.stone, 1,
+                        Resources.wood, 20,
+                        this.category.element
+                    );
+                    game.log("A merchant has appeared", Colours.yellow);
+                    sendMsg(MessageTypes.eventUpdate, "show-seller");
+                },
+                true
+            ),
+            new ResourceCondition(
+                { [Resources.money]: 10 },
+                () => {
+                    this.buttons.wheat_for_wood = new ExchangeResButton(
+                        Resources.wheat, 1,
+                        Resources.wood, 50,
+                        this.category.element
+                    );
+                    this.buttons.pinpin_base = new BuyPinpinButton(
+                        PinpinType.base,
+                        1,
+                        this.category.element
+                    );
+                    game.log("You can now buy Pinpins!", Colours.green);
+                }, 
+                true
+            ),
+        ];
+
+        new SkillCondition(
+            "merchant_pp_sell",
+            (skill) => {
+                let type = PinpinType.explorer;
+                switch (skill.upgrade) {
+                    case 0: 
+                        type = PinpinType.explorer;
+                        break;
+                    case 1: 
+                        type = PinpinType.seller;
+                        break;
+                    case 2: 
+                        type = PinpinType.farmer;
+                        break;
+                }
+                this.buttons[`pinpin_${PinpinType.key(type)}`] = new BuyPinpinButton(
+                    type,
+                    1,
+                    this.category.element
+                );
+            }
+        );
+
+        new SkillCondition(
+            "merchant_crops",
+            (skill) => {
+                let count = 0;
+                switch (skill.upgrade) {
+                    case 0:
+                        count = 10;
+                        break;
+                    case 1:
+                        count = 50;
+                        break;
+                    case 2:
+                        count = 1000;
+                        break;
+                }
+                this.buttons.sell_wheat.setSellCount(count);
+            }
+        )
+
+        new SkillCondition(
+            "merchant_gen",
+            (skill) => {
+                let add_mul = 0;
+                switch (skill.upgrade) {
+                    case 0:
+                        add_mul = 5;
+                        break;
+                    case 1:
+                        add_mul = 10;
+                        break
+                    case 2:
+                        add_mul = 30;
+                        break;
+                    case 3:
+                        add_mul = 50;
+                        break
+                }
+                this.value_mul[Resources.wheat] += add_mul * 0.01;
+                this.buttons.sell_wheat.setValueMultiplier(this.value_mul[Resources.wheat]);
+            }
+        )
+        
+        this.listen_id = addListener(
+            MessageTypes.resourceUpdate,
+            () => this.step()
+        );
+
+        this.step();
+    }
+}
+
+
+seller_animation = [
+`
+          _.-""""-._
+         /.-......-.\\
+        //          \\\\
+        ||          ||
+        ||.--    --.||
+        /|  . || .  |\\
+        \\    (__)    /
+         |  ,____,  |
+          \\  \`--'  /
+       _./\`'.____.'\`\\._
+   _.::::|  |    |  |::::._
+ .::::::::\\  \\  /  /::::::::.
+/:::::::::::|/:\\/:\\|::::::::::\\
+`,
+`
+          _.-""""-._
+         /.-......-.\\
+        //          \\\\
+        ||          ||
+        ||.--    --.||
+        /| __ || __ |\\
+        \\    (__)    /
+         |  ,____,  |
+          \\  \`--'  /
+       _./\`'.____.'\`\\._
+   _.::::|  |    |  |::::._
+ .::::::::\\  \\  /  /::::::::.
+/:::::::::::|/:\\/:\\|::::::::::\\
+`
+]

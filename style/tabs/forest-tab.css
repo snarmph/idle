@@ -39,12 +39,12 @@
     top: calc(50% + 10px);
 }
 
-#forest-seller {
+#seller {
     flex-direction: row;
     grid-area: seller;
 }
 
-#forest-seller .button {
+#seller .button {
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -52,12 +52,12 @@
     max-width: auto;
 }
 
-#forest-seller .button:active {
+#seller .button:active {
     border-color: var(--disabled-col);
     color: var(--disabled-col);
 }
 
-#forest-seller .button[tooltip]::after {
+#seller .button[tooltip]::after {
     left: 50%;
     top: 100%;
 }

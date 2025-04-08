@@ -61,6 +61,32 @@ export class Inventory {
         }
     }
 
+    init() {
+        
+    }
+
+    getSaveData() {
+        let data = {};
+        for (const id in this.resources) {
+            const res = this.resources[id];
+            if (res.total > 0) {
+                data[id] = {
+                    count: res.count,
+                    total: res.total,
+                }
+            }
+        }
+        return data;
+    }
+
+    loadSaveData(data) {
+        for (const [id, item] of Object.entries(data)) {
+            const res = this.resources[id];
+            res.total = item.total;
+            res.set(item.count);
+        }
+    }
+
     add(id, count) {
         this.resources[id].add(count);
     }

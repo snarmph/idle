@@ -146,38 +146,39 @@ export class Button {
     }
 };
 
-export class SellButton extends Button {
-    constructor(resource, count, parent) {
-        const res_name = Resources.name(resource);
-
-        let name = "Sell ";
-        if (count === 1) name += "a";
-        else name += count;
-        name += ` ${res_name}`;
+export class ExchangeResButton extends Button {
+    constructor(get_res, get_count, give_res, give_count, parent) {
+        let text = `Barter for ${get_count} ${Resources.name(get_res)}`;
 
         super(
-            `sell-button-${Resources.key(resource)}`,
+            `exchange-button-${Resources.key(get_res)}`,
             parent,
-            name,
+            text,
             0.,
-            () => {
-                this.checkCondition()
-            }
+            () => this.checkCondition()
         );
 
-        this.value = Resources.get(resource, "value", 0);
-        this.setTooltip([
-            formatResource(resource, count),
-            formatResource(Resources.money, this.value * count),
-        ]);
+        this.get_res = get_res;
+        this.get_count = get_count;
+        this.give_res = give_res;
+        this.give_count = give_count;
 
         this.cooldown.remove();
         this.addOnClick(() => {
-            game.inventory.sell(resource, count);
+            game.inventory.remove(this.give_res, this.give_count);
+            game.inventory.add(this.get_res, this.get_count);
             this.disable();
         });
-        this.condition = new ResourceCondition({ [resource]: count });
+        this.condition = new ResourceCondition({ [this.give_res]: this.give_count });
         addListener(MessageTypes.resourceUpdate, () => this.checkCondition());
+        this.update();
+    }
+
+    update() {
+        this.setTooltip([
+            formatResource(this.give_res, -this.give_count),
+            formatResource(this.get_res, this.get_count),
+        ]);
     }
 
     checkCondition() {
@@ -191,6 +192,63 @@ export class SellButton extends Button {
     }
 }
 
+export class SellButton extends ExchangeResButton {
+    constructor(resource, count, parent) {
+        const value = Resources.get(resource, "value", 0);
+        super(
+            Resources.money, value * count, 
+            resource, count,
+            parent
+        );
+
+        this.value = value;
+        this.value_multiplier = 1;
+        this.updateText();
+    }
+
+    setSellCount(count) {
+        this.give_count = count;
+        this.get_count = (this.value * this.value_multiplier) * count;
+        this.updateText();
+        this.update();
+    }
+
+    setValueMultiplier(mul) {
+        this.value_multiplier = mul;
+        this.get_count = (this.value * this.value_multiplier) * this.give_count;
+        this.updateText();
+        this.update();
+    }
+
+    updateText() {
+        let text = "Sell ";
+        if (this.give_count === 1) text += "a";
+        else text += this.give_count;
+        text += ` ${Resources.name(this.give_res)}`;
+
+        this.setText(text)
+    }
+}
+
+export class BuyButton extends ExchangeResButton {
+    constructor(resource, count, parent) {
+        const value = Resources.get(resource, "value", 0);
+        super(
+            resource, count,
+            Resources.money, value * count, 
+            parent
+        );
+
+        const res_name = Resources.name(resource);
+
+        let text = "Buy ";
+        if (count === 1) text += "a";
+        else text += count;
+        text += ` ${res_name}`;
+
+        this.setText(text)
+    }
+}
 
 export class BuyPinpinButton extends Button {
     constructor(type, count, parent) {
@@ -215,7 +273,7 @@ export class BuyPinpinButton extends Button {
         this.cost = pinpin.value * count;
         this.setTooltip([
             `+${formatNumber(count)} ${pinpin.name}`,
-            formatResource(Resources.money, this.cost),
+            formatResource(Resources.money, -this.cost),
         ]);
 
         this.cooldown.remove();

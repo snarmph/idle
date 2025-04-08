@@ -7,7 +7,7 @@ import { PinpinType } from "src/village.js"
 export function exploreForest(pinpin_count = 1) {
     const found = randomResources({
         [Resources.wood]: { min: 1, max: 5 },
-        [Resources.seeds]: { atleast: 90 },
+        [Resources.seeds]: { atleast: 70 },
         [Resources.stone]: { atleast: 98 }
     });
 
@@ -40,10 +40,10 @@ export function trySell(count = 1, pinpin_count = 1) {
 
 export function farm(pinpin_count = 1) {
     for (const tile of game.garden.tiles) {
-        if (tile.tryNext()) {
-            sendMsg(MessageTypes.pinpinAction, { type: PinpinType.farmer, index: tile.index });
-            pinpin_count--;
-            if (pinpin_count === 0) {
+        let needed = tile.getPinpinNeeded();
+        if (pinpin_count >= needed && tile.tryNext()) {
+            pinpin_count -= needed;
+            if (pinpin_count <= 0) {
                 return;
             }
         }
