@@ -6,6 +6,8 @@ export const Colours = makeEnum({
     green: "green-col",
     yellow: "yellow-col",
     red: "red-col",
+    purple: "purple-col",
+    blue: "blue-col",
 });
 
 class LogItem {
