@@ -8,6 +8,7 @@ export class BaseTab {
         this.content_id = `content-${id}`;
         this.name = name;
         this.is_active = false;
+        this.is_visible = false;
 
         this.tab_elem = htmlFromStr(
             `<div id="${this.tab_id}" class="tab-item">${this.name}</div>`
@@ -42,6 +43,8 @@ export class BaseTab {
     }
 
     show() {
+        if (this.is_visible) return;
+        this.is_visible = true;
         makeVisible(this.tab_elem);
         this.onVisible();
     }

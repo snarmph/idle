@@ -1,9 +1,10 @@
 import { makeEnum } from "src/utils/enum.js"
-import { MessageTypes, sendMsg } from "src/messages.js"
-import { getRandomInt } from "src/utils/rand.js"
+import { MessageTypes, sendMsg, addListener } from "src/messages.js"
+import { getRandomInt, randomEvent, randomItem } from "src/utils/rand.js"
 import { game } from "src/game.js"
 import * as actions from "src/actions.js"
-import { randomItem } from "./utils/rand.js"
+import { SkillCondition } from "src/condition.js"
+import { Colours } from "src/log.js"
 
 export const PinpinType = makeEnum({
     base: {
@@ -43,6 +44,11 @@ export class Pinpin {
         this.type = type;
         this.count = count;
         this.total = count;
+        this.breeding = {
+            chance: 0,
+            time: 0,
+            interval_id: null,
+        };
         this.is_paused = false;
         this.interval_handle = null;
         this.speed = PinpinType.get(type, "speed");
@@ -151,7 +157,61 @@ export class Village {
     }
 
     init() {
-        
+        new SkillCondition(
+            "pinpin_breeding", 
+            (skill) => {
+                const breed = [
+                    { chance: 0.0001, time: 5.0 },
+                    { chance: 0.001,  time: 3.0 },
+                    { chance: 0.002,  time: 1.0 },
+                    { chance: 0.005,  time: 0.5 },
+                ];
+                const chance = breed[skill.upgrade].chance;
+                const time = breed[skill.upgrade].time;
+                this.startBreeding(PinpinType.base, chance, time);
+            }
+        )
+        new SkillCondition(
+            "special_breed",
+            (skill) => {
+                const breed = [
+                    { chance: 0.0001, time: 10.0 },
+                    { chance: 0.001,  time:  5.0 },
+                    { chance: 0.002,  time:  2.5 },
+                    { chance: 0.005,  time:  1.0 },
+                ];
+                const chance = breed[skill.upgrade].chance;
+                const time = breed[skill.upgrade].time;
+                for (const [id, pin] of Object.entries(this.pinpins)) {
+                    if (id === PinpinType.base) continue;
+                    this.startBreeding(id, chance, time);
+                }
+            }
+        )
+    }
+
+    startBreeding(type, chance, time) {
+        const pinpin = this.pinpins[type];
+        clearInterval(pinpin.breeding.interval_id);
+        pinpin.breeding.chance = chance;
+        pinpin.breeding.time = time;
+        console.log(time * 1000);
+        pinpin.breeding.interval_id = setInterval(
+            () => {
+                if (pinpin.count < 2) {
+                    return;
+                }
+
+                const couples = Math.floor(pinpin.count * 0.5);
+                const new_pinpins = randomEvent(pinpin.breeding.chance, couples);
+                if (new_pinpins <= 0) {
+                    return;
+                }
+
+                this.add(type, new_pinpins);
+            },
+            time * 1000
+        );
     }
 
     getSaveData() {

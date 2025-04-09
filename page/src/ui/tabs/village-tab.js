@@ -4,9 +4,9 @@ import { BaseTab } from "src/ui/tab.js"
 import { game } from "src/game.js"
 import { addListener, MessageTypes } from "src/messages.js"
 import { PinpinType } from "src/village.js";
-import { formatResource } from "src/utils/num.js"
+import { formatResource, formatNumber } from "src/utils/num.js"
 import { Resources } from "src/inventory.js";
-
+    
 export class VillageTab extends BaseTab {
     constructor() {
         super(VillageTab.getId(), "Pinpins");
@@ -25,15 +25,17 @@ export class VillageTab extends BaseTab {
     /* overload */ 
     onInit() {
         // this.show();
+        addListener(
+            MessageTypes.pinpinUpdate,
+            (data) => {
+                this.show();
+                this.update();
+            }
+        )
     }
 
     /* overload */ 
     onVisible() {
-        addListener(MessageTypes.pinpinUpdate, 
-            (data) => {
-                this.update();
-            }
-        );
         this.update();
     }
 
@@ -61,7 +63,7 @@ export class VillageTab extends BaseTab {
             ui.htmlFromStr(`
                 <div class="pinpin-data">
                     <div class="pinpin-name">${data.name}:</div>
-                    <div class="pinpin-count">${count}</div>
+                    <div class="pinpin-count">${formatNumber(count)}</div>
                 </div>`,
                 item
             );

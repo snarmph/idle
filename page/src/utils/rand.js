@@ -7,7 +7,7 @@ export function getRandomInt(min, max) {
 }
 
 export function randomCheck(value) {
-    return Math.random() >= value;
+    return Math.random() <= value;
 }
 
 export function randomCheckPercent(percent) {
@@ -62,4 +62,28 @@ export function randomResources(probabilities) {
 
 export function randomItem(arr) {
     return arr[getRandomInt(0, arr.length)];
+}
+
+// TODO: this is from chat-gpt
+export function gaussianRandom(mean, std_dev) {
+    // Generate two random numbers from standard normal distribution (box-muller transform)
+    let u1 = Math.random();
+    let u2 = Math.random();
+    
+    // Use the Box-Muller transform to generate a standard normal random variable
+    let z0 = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
+    
+    // Scale and shift to match the mean and standard deviation
+    return mean + z0 * std_dev;
+}
+
+export function randomEvent(chance, tries) {
+    const expected_result = tries * chance;
+    const standard_deviation = Math.sqrt(tries * chance * (1 - chance));
+    
+    // Use a normal distribution approximation with deviation
+    // Generate a random value from a normal distribution (Gaussian distribution)
+    const result = gaussianRandom(expected_result, standard_deviation);
+    
+    return Math.round(result);  
 }

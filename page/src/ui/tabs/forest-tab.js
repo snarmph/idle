@@ -137,6 +137,12 @@ export class ForestTab extends BaseTab {
                     if (game.garden.upgrade()) {
                         this.updateHouseButton();
                     }
+                },
+                () => {
+                    const cost = HouseLevels.get(game.garden.house + 1, "cost", 0);
+                    for (const [id, count] of Object.entries(cost)) {
+                        game.inventory.remove(id, count);
+                    }
                 }
             )
         }
@@ -148,7 +154,8 @@ export class ForestTab extends BaseTab {
                 { [Resources.stone]: 20 },
                 () => {
                     ui.makeVisible(this.get_buttons.mine_stone.button);
-                }
+                },
+                true
             )
         ];
 
@@ -307,9 +314,5 @@ export class ForestTab extends BaseTab {
             ui.makeVisible(this.seller.category.element);
             this.seller.animate();
         }
-        // this.animateSeller();
-    }
-
-    animateSeller() {
     }
 }
