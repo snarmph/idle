@@ -152,6 +152,7 @@ export class Button extends SimpleButton {
 
     finishCooldown() {
         this.is_in_cooldown = false;
+        this.cooldown.setAttribute("style", "width: 0%");
         this.enable();
         this.onFinished();
     }
