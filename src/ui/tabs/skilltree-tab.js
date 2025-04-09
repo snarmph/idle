@@ -14,7 +14,7 @@ class SkillTab {
         this.connections = [];
 
         this.element.addEventListener("click", () => {
-            this.skill.tryUnlock(true);
+            this.skill.tryUnlock();
         })
 
         skill.on_unlocked.push(() => this.update());
