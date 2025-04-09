@@ -1,7 +1,9 @@
 function wsConnect() {
-    var ws = new WebSocket("ws://localhost:8080/websocket");
+    if (ws) return;
+    ws = new WebSocket("ws://localhost:8080/websocket");
 
     ws.onopen = () => {
+        clearTimeout(ws_timeout_id);
         console.log("WebSocket connected");
     }
 
@@ -13,8 +15,11 @@ function wsConnect() {
     };
 
     ws.onclose = () => {
-        setTimeout(() => wsConnect(), 1000);
+        ws = null;
+        ws_timeout_id = setTimeout(() => wsConnect(), 1000);
     };
 }
 
+let ws = null;
+let ws_timeout_id = null;
 wsConnect();

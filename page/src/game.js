@@ -12,6 +12,7 @@ import { ForestTab } from "src/ui/tabs/forest-tab.js"
 import { GardenTab } from "src/ui/tabs/garden-tab.js"
 import { OptionsTab } from "src/ui/tabs/options-tab.js"
 import { SkillTreeTab } from "src/ui/tabs/skilltree-tab.js";
+import { VillageTab } from "./ui/tabs/village-tab.js";
 
 export class Game {
     constructor() {
@@ -36,11 +37,12 @@ export class Game {
 
         this.tab_manager.add(new ForestTab());
         this.tab_manager.add(new GardenTab());
+        this.tab_manager.add(new VillageTab());
         this.tab_manager.add(new OptionsTab());
         this.tab_manager.add(new SkillTreeTab());
 
         this.tab_manager.setActive(ForestTab.getId());
-        // this.tab_manager.setActive(SkillTreeTab.getId());
+        this.tab_manager.setActive(VillageTab.getId());
 
         // save every 60 seconds
         setInterval(
