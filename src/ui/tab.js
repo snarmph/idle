@@ -93,7 +93,6 @@ export class TabManager {
         if (typeof(tab_or_id) !== "string") {
             id = tab_or_id.id;
         }
-        console.log("showing", id);
         this.tabs[id].show();
     }
 

@@ -3,10 +3,10 @@ import { BaseTab } from "src/ui/tab.js"
 import { game } from "src/game.js"
 import { Resources } from "src/inventory.js"
 import { MessageTypes, addListener, removeListener, sendMsg } from "src/messages.js"
-import { Button, ExchangeResButton, SellButton, BuyButton, BuyPinpinButton } from "src/ui/button.js"
+import { Button } from "src/ui/button.js"
 import { formatResource } from "src/utils/num.js"
 import { HouseLevels } from "src/garden.js"
-import { Condition, ResourceCondition, SkillCondition } from "src/condition.js"
+import { Condition, ResourceCondition, SkillCondition, forEachCond } from "src/condition.js"
 import { getRandomInt } from "src/utils/rand.js"
 import { Colours } from "src/log.js"
 import { formatRaw, formatNumber } from "src/utils/num.js"
@@ -31,21 +31,13 @@ export class ForestTab extends BaseTab {
             `<div class="forest-build-buttons"></div>`,
             this.grid_elem
         );
-        // this.data_elem = ui.htmlFromStr(
-        //     `<div class="forest-data"></div>`,
-        //     this.grid_elem
-        // );
 
         this.categories = {
             resources: document.getElementById("resources-category"), 
-            pinpins: document.getElementById("pinpins-category"), 
-            // new ui.Category("forest-resources", this.data_elem, "Resources"),
-            // pinpins: new ui.Category("forest-pinpins", this.data_elem, "Pinpins"),
+            pinpins:   document.getElementById("pinpins-category"), 
         }
 
         for (const [_, cat] of Object.entries(this.categories)) {
-            // ui.makeInvisible(cat.element);
-            console.log(_, cat);
             ui.makeInvisible(cat);
         }
 
@@ -95,7 +87,7 @@ export class ForestTab extends BaseTab {
             ui.makeInvisible(container);
         }
 
-        this.sell_buttons = {
+        this.get_buttons = {
             explore_forest: new Button(
                 "button-explore",
                 this.get_elem,
@@ -112,7 +104,25 @@ export class ForestTab extends BaseTab {
                     game.log(msg);
                 }
             ),
+            mine_stone: new Button(
+                "button-mine",
+                this.get_elem,
+                "Go Mine",
+                2,
+                () => {
+                    const found = actions.mineStone();
+                    let msg = "Mined ";
+                    for (let i = 0; i < found.length; ++i) {
+                        const res = found[i];
+                        msg += `${res.name}: ${formatRaw(res.count)}`;
+                        if (i + 1 < found.length) msg += ", ";
+                    }
+                    game.log(msg);
+                } 
+            )
         };
+
+        ui.makeInvisible(this.get_buttons.mine_stone.button);
 
         this.buy_buttons = {
             house_upgrade: new Button(
@@ -132,6 +142,15 @@ export class ForestTab extends BaseTab {
         }
 
         ui.makeInvisible(this.buy_buttons.house_upgrade.button);
+
+        this.conditions = [
+            new ResourceCondition(
+                { [Resources.stone]: 20 },
+                () => {
+                    ui.makeVisible(this.get_buttons.mine_stone.button);
+                }
+            )
+        ];
 
         this.house_condition = null;
         this.updateHouseButton();
@@ -161,6 +180,8 @@ export class ForestTab extends BaseTab {
                 ui.makeVisible(this.categories.resources);
 
                 this.stepHouseCondition();
+
+                forEachCond(this.conditions);
             }
         );
 

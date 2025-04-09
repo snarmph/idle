@@ -2,6 +2,7 @@ import * as ui from "src/ui/base.js"
 import { BaseTab } from "src/ui/tab.js"
 import { game } from "src/game.js"
 import { NumFormatting } from "src/utils/num.js"
+import { SimpleButton } from "src/ui/button.js"
 
 export class OptionsTab extends BaseTab {
     constructor() {
@@ -13,6 +14,25 @@ export class OptionsTab extends BaseTab {
         );
 
         this.addCheckbox("Dark Mode", game.options.dark_mode, () => game.options.toggleDarkMode());
+
+        this.save_elem = ui.htmlFromStr(`<div class="save-btn"></div>`, this.options_elem);
+        this.file_elem = ui.htmlFromStr(`<div class="file-btn"></div>`, this.options_elem);
+
+        this.buttons = {
+            save: new SimpleButton("save-button", this.save_elem, "Save", () => game.save()),
+            load: new SimpleButton("load-button", this.save_elem, "Load", () => game.load()),
+            save_to_file:   new SimpleButton("save-to-file-button", this.file_elem, "Save to file", () => this.saveToFile()),
+            load_from_file: new SimpleButton("load-from-file-button", this.file_elem, "Load from file", () => this.loadFromFile()),
+            delete_save: new SimpleButton("delete-save-button", this.options_elem, "Delete save", () => debug.clearSave()),
+        }
+    }
+
+    saveToFile() {
+
+    }
+
+    loadFromFile() {
+
     }
 
     /* overload */ 
@@ -22,7 +42,7 @@ export class OptionsTab extends BaseTab {
 
     /* overload */ 
     onInit() {
-        // this.show();
+        this.show();
     }
 
     /* overload */ 

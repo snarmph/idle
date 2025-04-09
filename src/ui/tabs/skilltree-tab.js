@@ -14,7 +14,7 @@ class SkillTab {
         this.connections = [];
 
         this.element.addEventListener("click", () => {
-            this.skill.tryUnlock();
+            this.skill.tryUnlock(true);
         })
 
         skill.on_unlocked.push(() => this.update());
@@ -22,7 +22,10 @@ class SkillTab {
 
     update() {
         let new_class = "hidden";
-        if (this.skill.unlocked) {
+        if (this.skill.finished_upgrading) {
+            new_class = "skill-finished";
+        }
+        else if (this.skill.unlocked) {
             new_class = "skill-unlocked";
         }
         else if (this.skill.parent && this.skill.parent.unlocked) {
@@ -202,6 +205,7 @@ export class SkillTreeTab extends BaseTab {
 
     /* overload */ 
     onInit() {
+        // this.show();
         addListener(MessageTypes.skillUnlocked, (skill) => {
             for (const item of this.skills) {
                 item.update();
@@ -219,5 +223,7 @@ export class SkillTreeTab extends BaseTab {
     /* overload */ 
     onExitSelected() {
         removeEventListener("mousemove", this.onMouseMoveHandler);
+        this.is_hovering = false;
+        this.onMouseMove();
     }
 }

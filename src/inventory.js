@@ -8,6 +8,7 @@ export const Resources = makeEnum({
     seeds: {
         name: "seeds",
         singular: "seed",
+        value: 0.01,
     },
     wheat: {
         name: "wheat",

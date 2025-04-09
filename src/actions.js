@@ -19,6 +19,20 @@ export function exploreForest(pinpin_count = 1) {
     return items;
 }
 
+export function mineStone(pinpin_count = 1) {
+    const found = randomResources({
+        [Resources.stone]: { min: 1, max: 8 },
+        [Resources.money]: { atleast: 98, max: 2.0 },
+    });
+
+    const items = found.getResults();
+    for (const res of items) {
+        game.inventory.add(res.id, res.count * pinpin_count);
+    }
+
+    return items;
+}
+
 export function trySell(count = 1, pinpin_count = 1) {
     let res_to_sell = null;
     let max_value = 0;

@@ -18,8 +18,14 @@
     grid-template-rows: repeat(9, 1.5em);
 }
 
+.skill-finished {
+    opacity: 1.0;
+    color: var(--green-col);
+}
+
 .skill-unlocked {
     opacity: 1.0;
+    color: var(--main-col);
 }
 
 .skill-visible {

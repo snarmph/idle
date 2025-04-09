@@ -76,12 +76,12 @@ export const SkillsData = Object.freeze({
                         },
                         upgrades: [
                             {
-                                desc: `Merchant can now sell ${PinpinType.name(PinpinType.seller)}`,
+                                desc: `Merchant can now sell ${PinpinType.name(PinpinType.miner)}`,
                                 cost: {
                                     resources: {
-                                        [Resources.money]: 30,
+                                        [Resources.stone]: 50,
                                     },
-                            },
+                                },
                             },
                             {
                                 desc: `Merchant can now sell ${PinpinType.name(PinpinType.farmer)}`,
@@ -90,12 +90,20 @@ export const SkillsData = Object.freeze({
                                         [Resources.wheat]: 50,
                                     },
                                 },
-                            }
+                            },
+                            {
+                                desc: `Merchant can now sell ${PinpinType.name(PinpinType.seller)}`,
+                                cost: {
+                                    resources: {
+                                        [Resources.money]: 30,
+                                    },
+                                },
+                            },
                         ]
                     },
                     merchant_crops: {
                         name: "Rich Merchant",
-                        desc: "The Merchant now buys 10x crops at a time",
+                        desc: "The Merchant now buys 10x crops at a time and gives 2x the items when bartering",
                         icon: "c",
                         icon_colour: Colours.yellow,
                         x: 2, y: 0,
@@ -106,7 +114,7 @@ export const SkillsData = Object.freeze({
                         },
                         upgrades: [
                             {
-                                desc: "The Merchant now buys 50x crops at a time",
+                                desc: "The Merchant now buys 50x crops at a time and gives 5x the items when bartering",
                                 cost: {
                                     resources: {
                                         [Resources.wheat]: 1000,
@@ -114,7 +122,7 @@ export const SkillsData = Object.freeze({
                                 },
                             },
                             {
-                                desc: "The Merchant now buys 1000x crops at a time",
+                                desc: "The Merchant now buys 1000x crops at a time and gives 200x the items when bartering",
                                 cost: {
                                     resources: {
                                         [Resources.wheat]: 1_000_000,

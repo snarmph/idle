@@ -1,3 +1,7 @@
+#tab-options {
+    order: 999;
+}
+
 .options {
     display: flex;
     flex-direction: column;
@@ -28,7 +32,19 @@ select {
     color: var(--main-col);
     padding: 10px;
     width: auto;
+}
 
+#delete-save-button {
+    color: var(--red-col);
+    border: 1px solid var(--red-col);
+}
+
+#delete-save-button:active {
+    color: var(--disabled-col);
+    border: 1px solid var(--disabled-col);
 }
   
-  
+.save-btn, .file-btn {
+    display: flex;
+    gap: 20px;
+}
