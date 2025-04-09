@@ -7,6 +7,7 @@ import { game } from "src/game.js"
 import { sendMsg, MessageTypes } from "src/messages.js"
 import { Timer } from "src/utils/timer.js"
 import { SkillCondition } from "./condition.js"
+import { randomCheck } from "./utils/rand.js"
 
 export const HouseLevels = makeEnum({
     none: {
@@ -91,6 +92,7 @@ export class GardenTile {
         this.resource = Resources.wheat;
         this.num_multiplier = 1;
         this.speed_multiplier = 1;
+        this.replant_chance = 0;
         this.condition = null;
         this.listener_id = null;
         this.timer = null;
@@ -100,7 +102,7 @@ export class GardenTile {
         this.on_end_cooldown = null;
     }
     
-    runState(found = null) {
+    runState(found = null, is_pinpin = false) {
         const state = TileState.fromIndex(this.state);
         if ("cost" in state) {
             const cost = {};
@@ -113,14 +115,14 @@ export class GardenTile {
             this.condition = null;
         }
 
-        sendMsg(MessageTypes.gardenUpdate, { index: this.index, harvest: found });
+        sendMsg(MessageTypes.gardenUpdate, { index: this.index, harvest: is_pinpin ? null : found });
 
         if ("autorun" in state && state.autorun) {
             this.tryNext();
         }
     }
 
-    startTimer(from = 0) {
+    startTimer(from = 0, is_pinpin = false) {
         const state = TileState.fromIndex(this.state);
 
         this.timer = new Timer(
@@ -128,7 +130,7 @@ export class GardenTile {
             this.on_step_cooldown,
             () => {
                 this.timer = null;
-                this.next();
+                this.next(is_pinpin);
                 if (this.on_end_cooldown) {
                     this.on_end_cooldown();
                 }
@@ -149,7 +151,7 @@ export class GardenTile {
         return this.num_multiplier;
     }
 
-    tryNext() {
+    tryNext(is_pinpin = false) {
         if (!this.check()) return false;
 
         const state = TileState.fromIndex(this.state);
@@ -160,7 +162,7 @@ export class GardenTile {
             }
         }
 
-        this.startTimer();
+        this.startTimer(0, is_pinpin);
         if (this.on_start_cooldown) {
             this.on_start_cooldown();
         }
@@ -168,16 +170,19 @@ export class GardenTile {
         return true;
     }
 
-    next() {
+    next(is_pinpin = false) {
         let found = null;
 
         this.state += 1;
         if (this.state >= TileState.count()) {
             this.state = 0;
             found = this.harvest();
+            if (randomCheck(this.replant_chance)) {
+                this.state = TileState.growing;
+            }
         }
 
-        this.runState(found);
+        this.runState(found, is_pinpin);
     }
 
     harvest() {
@@ -293,6 +298,21 @@ export class Garden {
                 spd_mul = spd_mul[skill.upgrade];
                 for (const tile of this.tiles) {
                     tile.speed_multiplier *= spd_mul;
+                }
+            }
+        )
+        new SkillCondition(
+            "seed_chance",
+            (skill) => {
+                let replant_chance = [
+                    0.05,
+                    0.15,
+                    0.50,
+                    0.75,
+                ];
+                replant_chance = replant_chance[skill.upgrade];
+                for (const tile of this.tiles) {
+                    tile.replant_chance = replant_chance;
                 }
             }
         )

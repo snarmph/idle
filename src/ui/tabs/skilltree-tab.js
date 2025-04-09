@@ -6,6 +6,9 @@ import { formatNumber } from "src/utils/num.js"
 import { PinpinType } from "src/village.js"
 import { Resources } from "src/inventory.js"
 import { addListener, MessageTypes } from "../../messages.js"
+import { getRandomInt } from "../../utils/rand.js"
+
+let witch_animation = [];
 
 class SkillTab {
     constructor(element, skill) {
@@ -55,6 +58,7 @@ export class SkillTreeTab extends BaseTab {
         this.grid_width  = game.skill_tree.width;
         this.grid_height = game.skill_tree.height;
         this.is_hovering = false;
+        this.timer = null;
 
         this.onMouseMoveHandler = (event) => this.onMouseMove(event); 
         
@@ -218,12 +222,63 @@ export class SkillTreeTab extends BaseTab {
     /* overload */ 
     onSelected() {
         addEventListener("mousemove", this.onMouseMoveHandler);
+        ui.makeVisible(this.extra.parentElement);
+        this.animate();
     }
 
     /* overload */ 
     onExitSelected() {
+        ui.makeInvisible(this.extra.parentElement);
+        clearTimeout(this.timer);
         removeEventListener("mousemove", this.onMouseMoveHandler);
+        this.timer = null;
         this.is_hovering = false;
         this.onMouseMove();
     }
+
+    animate() {
+        this.extra.textContent = witch_animation[0];
+        const timeout = getRandomInt(5000, 10000);
+        clearTimeout(this.timer);
+        this.timer = setTimeout(
+            () => {
+                clearTimeout(this.timer);
+                this.extra.textContent = witch_animation[1];
+                this.timer = setTimeout(
+                    () => this.animate(),
+                    100
+                )
+            },
+            timeout
+        )
+    }
 }
+
+witch_animation = [
+`       ,{{}}}}}}.
+      {{{{{}}}}}}}.
+     {{{{  {{{{{}}}}
+    }}}}} _   _ {{{{{
+    }}}}  |   |  }}}}}
+   {{{{C    ^    {{{{{
+  }}}}}}\\   -  /}}}}}}
+ {{{{{{{{;.___.;{{{{{{{{
+ }}}}}}}}})   (}}}}}}}}}}
+{{{{}}}}}':   :{{{{{{{{{{
+{{{}}}}}}  \`@\` {{{}}}}}}}
+ {{{{{{{{{    }}}}}}}}}
+`,
+`       ,{{}}}}}}.
+      {{{{{}}}}}}}.
+     {{{{  {{{{{}}}}
+    }}}}} _   _ {{{{{
+    }}}}  _   _  }}}}}
+   {{{{C    ^    {{{{{
+  }}}}}}\   -  /}}}}}}
+ {{{{{{{{;.___.;{{{{{{{{
+ }}}}}}}}})   (}}}}}}}}}}
+{{{{}}}}}':   :{{{{{{{{{{
+{{{}}}}}}  \`@\` {{{}}}}}}}
+ {{{{{{{{{    }}}}}}}}}
+`,
+]

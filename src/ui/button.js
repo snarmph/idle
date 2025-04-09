@@ -104,7 +104,7 @@ export class SimpleButton {
 }
 
 export class Button extends SimpleButton {
-    constructor(id, parent, text, timeout_sec, onFinishedCallback) {
+    constructor(id, parent, text, timeout_sec, onFinishedCallback, onClickCallback = null) {
         super(id, parent, text);
         
         this.start = 0;
@@ -120,6 +120,9 @@ export class Button extends SimpleButton {
         }
 
         this.onclicks.push(() => this.startCooldown());
+        if (onClickCallback) {
+            this.onclicks.push(onClickCallback);
+        }
     }
 
     enable() {

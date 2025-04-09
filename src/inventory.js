@@ -8,7 +8,6 @@ export const Resources = makeEnum({
     seeds: {
         name: "seeds",
         singular: "seed",
-        value: 0.01,
     },
     wheat: {
         name: "wheat",
@@ -16,6 +15,7 @@ export const Resources = makeEnum({
     },
     stone: {
         name: "stone",
+        value: 0.01,
     },
     money: {
         name: "coins",

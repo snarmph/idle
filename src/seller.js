@@ -50,9 +50,7 @@ export class Seller {
                 clearTimeout(this.timer);
                 this.extra.textContent = seller_animation[1];
                 this.timer = setTimeout(
-                    () => {
-                        this.animate();
-                    },
+                    () => this.animate(),
                     100
                 );
             },
@@ -81,13 +79,14 @@ export class Seller {
                 true
             ),
             new ResourceCondition(
-                { [Resources.seeds]: 100 },
+                { [Resources.stone]: 100 },
                 () => {
-                    this.buttons.sell_seeds = new SellButton(
-                        Resources.seeds, 20,
+                    this.buttons.sell_stone = new SellButton(
+                        Resources.stone, 20,
                         this.category.element
                     );
-                }
+                },
+                true
             ),
             new ResourceCondition(
                 { [Resources.money]: 10 },
@@ -124,7 +123,6 @@ export class Seller {
                 );
                 btn.checkCondition();
                 this.buttons[`pinpin_${PinpinType.key(type)}`] = btn;
-
             }
         );
 

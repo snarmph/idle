@@ -311,234 +311,107 @@ export const SkillsData = Object.freeze({
                     },
                 },
                 children: {
-                    pinpin_house: {
-                        name: "Pinpin Hut",
-                        desc: "Build a hut for pinpins, every hut can store x3 pinpins",
-                        icon: "h",
-                        icon_colour: Colours.yellow,
+                    pinpin_breeding: {
+                        name: "Get a room",
+                        desc: `Each couple of ${PinpinType.name(PinpinType.base)} have a 0.1% chance of breeding and creating another ${PinpinType.name(PinpinType.base)} every 5 seconds`,
+                        icon: "b",
+                        icon_colour: Colours.red,
                         x: 0, y: 6,
                         cost: {
-                            resources: {
-                                [Resources.wood]: 300,
-                                [Resources.stone]: 10,
-                            },
                             pinpins: {
-                                [PinpinType.base]: 3,
+                                [PinpinType.base]: 10,
                             },
                         },
                         upgrades: [
                             {
-                                name: "Pinpin House",
-                                desc: "Build a house for pinpins, every house can store x10 pinpins",
-                                cost: {
-                                    resources: {
-                                        [Resources.wood]: 500,
-                                        [Resources.stone]: 20,
-                                    },
+                                desc: `Each couple of ${PinpinType.name(PinpinType.base)} have a 1% chance of breeding and creating another ${PinpinType.name(PinpinType.base)} every 3 seconds`,
+                                cost:{
                                     pinpins: {
-                                        [PinpinType.base]: 5,
+                                        [PinpinType.base]: 25,
                                     },
                                 },
                             },
                             {
-                                name: "Pinpin Village",
-                                desc: "Build a village for pinpins, every house can store x100 pinpins",
-                                cost: {
-                                    resources: {
-                                        [Resources.wood]: 5000,
-                                        [Resources.stone]: 200,
-                                    },
+                                desc: `Each couple of ${PinpinType.name(PinpinType.base)} have a 2% chance of breeding and creating another ${PinpinType.name(PinpinType.base)} every second`,
+                                cost:{
                                     pinpins: {
-                                        [PinpinType.base]: 20,
+                                        [PinpinType.base]: 70,
                                     },
                                 },
                             },
                             {
-                                name: "Pinpin City",
-                                desc: "Build a city for pinpins, every city can store x10000 pinpins",
-                                cost: {
-                                    resources: {
-                                        [Resources.wood]: 500_000,
-                                        [Resources.stone]: 200_000,
-                                    },
+                                desc: `Each couple of ${PinpinType.name(PinpinType.base)} have a 5% chance of breeding and creating another ${PinpinType.name(PinpinType.base)} every 0.5 seconds`,
+                                cost:{
                                     pinpins: {
-                                        [PinpinType.base]: 2000,
+                                        [PinpinType.base]: 1000,
                                     },
                                 },
                             },
                         ],
                         children: {
-                            pinpin_breeding: {
-                                name: "Get a room",
-                                desc: `Each couple of ${PinpinType.name(PinpinType.base)} have a 5% chance of breeding and creating another ${PinpinType.name(PinpinType.base)} every 5 seconds`,
-                                icon: "b",
-                                icon_colour: Colours.red,
+                            special_breed: {
+                                name: "Like father like son",
+                                desc: "Any pair of specialised pinpins have a 5% chance of breeding every 10 seconds",
+                                icon: "s",
+                                icon_colour: Colours.blue,
                                 x: 0, y: 8,
                                 cost: {
                                     pinpins: {
-                                        [PinpinType.base]: 10,
+                                        [PinpinType.explorer]: 1,
+                                        [PinpinType.seller]:   1,
+                                        [PinpinType.farmer]:   1,
+                                        [PinpinType.miner]:    1,
                                     },
                                 },
                                 upgrades: [
                                     {
-                                        desc: `Each couple of ${PinpinType.name(PinpinType.base)} have a 15% chance of breeding and creating another ${PinpinType.name(PinpinType.base)} every 3 seconds`,
-                                        cost:{
+                                        desc: "Any pair of specialised pinpins have a 15% chance of breeding every 5 seconds",
+                                        cost: {
                                             pinpins: {
-                                                [PinpinType.base]: 25,
+                                                [PinpinType.explorer]: 5,
+                                                [PinpinType.seller]:   5,
+                                                [PinpinType.farmer]:   5,
+                                                [PinpinType.miner]:    5,
                                             },
                                         },
                                     },
                                     {
-                                        desc: `Each couple of ${PinpinType.name(PinpinType.base)} have a 30% chance of breeding and creating another ${PinpinType.name(PinpinType.base)} every second`,
-                                        cost:{
+                                        desc: "Any pair of specialised pinpins have a 30% chance of breeding every 2.5 seconds",
+                                        cost: {
                                             pinpins: {
-                                                [PinpinType.base]: 70,
+                                                [PinpinType.explorer]: 25,
+                                                [PinpinType.seller]:   25,
+                                                [PinpinType.farmer]:   25,
+                                                [PinpinType.miner]:    25,
                                             },
                                         },
                                     },
                                     {
-                                        desc: `Each couple of ${PinpinType.name(PinpinType.base)} have a 50% chance of breeding and creating another ${PinpinType.name(PinpinType.base)} every 0.5 seconds`,
-                                        cost:{
+                                        desc: "Any pair of specialised pinpins have a 50% chance of breeding every second",
+                                        cost: {
                                             pinpins: {
-                                                [PinpinType.base]: 1000,
+                                                [PinpinType.explorer]: 200,
+                                                [PinpinType.seller]:   200,
+                                                [PinpinType.farmer]:   200,
+                                                [PinpinType.miner]:    200,
+                                            },
+                                        },
+                                    },
+                                    {
+                                        desc: "Any pair of specialised pinpins have a 75% chance of breeding every 0.5 seconds",
+                                        cost: {
+                                            pinpins: {
+                                                [PinpinType.explorer]: 20_000,
+                                                [PinpinType.seller]:   20_000,
+                                                [PinpinType.farmer]:   20_000,
+                                                [PinpinType.miner]:    20_000,
                                             },
                                         },
                                     },
                                 ],
-                                children: {
-                                    special_breed: {
-                                        name: "Strong genetics",
-                                        desc: "Any pair of specialised pinpins have a 5% chance of breeding every 10 seconds",
-                                        icon: "s",
-                                        icon_colour: Colours.blue,
-                                        x: 2, y: 8,
-                                        cost: {
-                                            pinpins: {
-                                                [PinpinType.explorer]: 1,
-                                                [PinpinType.seller]:   1,
-                                                [PinpinType.farmer]:   1,
-                                            },
-                                        },
-                                        upgrades: [
-                                            {
-                                                desc: "Any pair of specialised pinpins have a 15% chance of breeding every 5 seconds",
-                                                cost: {
-                                                    pinpins: {
-                                                        [PinpinType.explorer]: 5,
-                                                        [PinpinType.seller]:   5,
-                                                        [PinpinType.farmer]:   5,
-                                                    },
-                                                },
-                                            },
-                                            {
-                                                desc: "Any pair of specialised pinpins have a 30% chance of breeding every 2.5 seconds",
-                                                cost: {
-                                                    pinpins: {
-                                                        [PinpinType.explorer]: 25,
-                                                        [PinpinType.seller]:   25,
-                                                        [PinpinType.farmer]:   25,
-                                                    },
-                                                },
-                                            },
-                                            {
-                                                desc: "Any pair of specialised pinpins have a 50% chance of breeding every second",
-                                                cost: {
-                                                    pinpins: {
-                                                        [PinpinType.explorer]: 200,
-                                                        [PinpinType.seller]:   200,
-                                                        [PinpinType.farmer]:   200,
-                                                    },
-                                                },
-                                            },
-                                            {
-                                                desc: "Any pair of specialised pinpins have a 75% chance of breeding every 0.5 seconds",
-                                                cost: {
-                                                    pinpins: {
-                                                        [PinpinType.explorer]: 20_000,
-                                                        [PinpinType.seller]:   20_000,
-                                                        [PinpinType.farmer]:   20_000,
-                                                    },
-                                                },
-                                            },
-                                        ],
-                                        children: {
-                                            pinpin_genetics: {
-                                                name: "Strong genetics",
-                                                desc: "When breeding 2 specialised pinpins, there's a 5% chance that their offspring will have a +5% efficency boost",
-                                                icon: "g",
-                                                icon_colour: Colours.green,
-                                                x: 4, y: 8,
-                                                cost: {
-                                                    resources: {
-                                                        [Resources.money]: 1000,
-                                                    },
-                                                    pinpins: {
-                                                        [PinpinType.explorer]: 25,
-                                                        [PinpinType.seller]:   25,
-                                                        [PinpinType.farmer]:   25,
-                                                    },
-                                                },
-                                                upgrades: [
-                                                    {
-                                                        desc: "When breeding 2 specialised pinpins, there's a 15% chance that their offspring will have a +5% efficency boost",
-                                                        cost: {
-                                                            resources: {
-                                                                [Resources.money]: 10_000,
-                                                            },
-                                                            pinpins: {
-                                                                [PinpinType.explorer]: 200,
-                                                                [PinpinType.seller]:   200,
-                                                                [PinpinType.farmer]:   200,
-                                                            },
-                                                        },
-                                                    },
-                                                    {
-                                                        desc: "When breeding 2 specialised pinpins, there's a 30% chance that their offspring will have a +15% efficency boost",
-                                                        cost: {
-                                                            resources: {
-                                                                [Resources.money]: 1_000_000,
-                                                            },
-                                                            pinpins: {
-                                                                [PinpinType.explorer]: 20_000,
-                                                                [PinpinType.seller]:   20_000,
-                                                                [PinpinType.farmer]:   20_000,
-                                                            },
-                                                        },
-                                                    },
-                                                    {
-                                                        desc: "When breeding 2 specialised pinpins, there's a 50% chance that their offspring will have a +25% efficency boost",
-                                                        cost: {
-                                                            resources: {
-                                                                [Resources.money]: 100_000_000,
-                                                            },
-                                                            pinpins: {
-                                                                [PinpinType.explorer]: 2_000_000,
-                                                                [PinpinType.seller]:   2_000_000,
-                                                                [PinpinType.farmer]:   2_000_000,
-                                                            },
-                                                        },
-                                                    },
-                                                    {
-                                                        desc: "When breeding 2 specialised pinpins, there's a 50% chance that their offspring will have a +50% efficency boost",
-                                                        cost: {
-                                                            resources: {
-                                                                [Resources.money]: 100_000_000_000,
-                                                            },
-                                                            pinpins: {
-                                                                [PinpinType.explorer]: 20_000_000,
-                                                                [PinpinType.seller]:   20_000_000,
-                                                                [PinpinType.farmer]:   20_000_000,
-                                                            },
-                                                        },
-                                                    },
-                                                ]
-                                            }
-                                        }
-                                    }
-                                }
-                            },
+                            }
                         }
-                    }
+                    },
                 }
             }
         },

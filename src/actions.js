@@ -36,26 +36,31 @@ export function mineStone(pinpin_count = 1) {
 export function trySell(count = 1, pinpin_count = 1) {
     let res_to_sell = null;
     let max_value = 0;
-    for (const [id, _] of Object.entries(game.inventory.resources)) {
-        const value = Resources.get(id, "value", null);
-        if (value === null) continue;
+    let sell_count = 0;
+    for (const [id, res] of Object.entries(game.inventory.resources)) {
+        const res_value = Resources.get(id, "value", null);
+        if (res_value === null) continue;
+
+        const res_sell_count = Math.min(count * pinpin_count, res.count);
+        const value = res_value * res_sell_count;
+
         if (value > max_value) {
             max_value = value;
             res_to_sell = id;
+            sell_count = res_sell_count;
         }
     }
-    if (res_to_sell === null) {
+    if (res_to_sell === null || sell_count === 0) {
         return;
     }
-    const max_count = game.inventory.countOf(res_to_sell);
-    const sell_count = Math.min(count * pinpin_count, max_count);
+    console.log("selling", Resources.name(res_to_sell), sell_count);
     game.inventory.sell(res_to_sell, sell_count);
 }
 
 export function farm(pinpin_count = 1) {
     for (const tile of game.garden.tiles) {
         let needed = tile.getPinpinNeeded();
-        if (pinpin_count >= needed && tile.tryNext()) {
+        if (pinpin_count >= needed && tile.tryNext(true)) {
             pinpin_count -= needed;
             if (pinpin_count <= 0) {
                 return;
