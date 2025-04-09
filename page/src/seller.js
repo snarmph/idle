@@ -7,7 +7,8 @@ import { SellButton, ExchangeResButton, BuyPinpinButton  } from "src/ui/button.j
 import { PinpinType } from "src/village.js";
 import { Colours } from "src/log.js"
 import { getRandomInt } from "src/utils/rand.js"
-import { Skill } from "./skill-tree.js";
+import { Skill } from "src/skill-tree.js";
+import { forEachCond } from "src/condition.js";
 
 let seller_animation = [];
 
@@ -37,13 +38,7 @@ export class Seller {
             this.listen_id = null;
             return;
         }
-        while (this.conditions.length > 0) {
-            const cond = this.conditions[0];
-            if (!cond.step()) {
-                break;
-            }
-            this.conditions.shift();
-        }
+        forEachCond(this.conditions);
     }
 
     animate() {
@@ -86,6 +81,15 @@ export class Seller {
                 true
             ),
             new ResourceCondition(
+                { [Resources.seeds]: 100 },
+                () => {
+                    this.buttons.sell_seeds = new SellButton(
+                        Resources.seeds, 20,
+                        this.category.element
+                    );
+                }
+            ),
+            new ResourceCondition(
                 { [Resources.money]: 10 },
                 () => {
                     this.buttons.wheat_for_wood = new ExchangeResButton(
@@ -107,63 +111,56 @@ export class Seller {
         new SkillCondition(
             "merchant_pp_sell",
             (skill) => {
-                let type = PinpinType.explorer;
-                switch (skill.upgrade) {
-                    case 0: 
-                        type = PinpinType.explorer;
-                        break;
-                    case 1: 
-                        type = PinpinType.seller;
-                        break;
-                    case 2: 
-                        type = PinpinType.farmer;
-                        break;
-                }
-                this.buttons[`pinpin_${PinpinType.key(type)}`] = new BuyPinpinButton(
-                    type,
+                let type = [
+                    PinpinType.explorer,
+                    PinpinType.miner,
+                    PinpinType.farmer,
+                    PinpinType.seller,
+                ];
+                const btn = new BuyPinpinButton(
+                    type[skill.upgrade],
                     1,
                     this.category.element
                 );
+                btn.checkCondition();
+                this.buttons[`pinpin_${PinpinType.key(type)}`] = btn;
+
             }
         );
 
         new SkillCondition(
             "merchant_crops",
             (skill) => {
-                let count = 0;
-                switch (skill.upgrade) {
-                    case 0:
-                        count = 10;
-                        break;
-                    case 1:
-                        count = 50;
-                        break;
-                    case 2:
-                        count = 1000;
-                        break;
+                let count = [
+                    { sell: 10, barter: 2 },
+                    { sell: 50, barter: 5 },
+                    { sell: 1000, barter: 200 },
+                ];
+                count = count[skill.upgrade];
+                for (const [_, btn] of Object.entries(this.buttons)) {
+                    switch (btn.constructor.name) {
+                        case SellButton.name:
+                            btn.setSellCount(count.sell);
+                            break;
+                        case ExchangeResButton.name:
+                            btn.get_count = count.barter;
+                            btn.update();
+                            break;
+                    }
                 }
-                this.buttons.sell_wheat.setSellCount(count);
             }
         )
 
         new SkillCondition(
             "merchant_gen",
             (skill) => {
-                let add_mul = 0;
-                switch (skill.upgrade) {
-                    case 0:
-                        add_mul = 5;
-                        break;
-                    case 1:
-                        add_mul = 10;
-                        break
-                    case 2:
-                        add_mul = 30;
-                        break;
-                    case 3:
-                        add_mul = 50;
-                        break
-                }
+                let add_mul = [
+                    5,
+                    10,
+                    30,
+                    50
+                ];
+                add_mul = add_mul[skill.upgrade];
                 this.value_mul[Resources.wheat] += add_mul * 0.01;
                 this.buttons.sell_wheat.setValueMultiplier(this.value_mul[Resources.wheat]);
             }

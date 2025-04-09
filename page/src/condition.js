@@ -72,3 +72,14 @@ export class SkillCondition extends Condition {
         });
     }
 }
+
+export function forEachCond(arr) {
+    for (let i = 0; i < arr.length; ++i) {
+        arr[i].step();
+        if (arr[i].unlocked()) {
+            arr[i] = arr[arr.length - 1];
+            arr.pop();
+            --i;
+        }
+    }
+}

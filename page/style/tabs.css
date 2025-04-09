@@ -4,7 +4,9 @@
     z-index: 1;
 }
 #tab-filler {
+    order: 1000;
     flex-grow: 1;
+    flex-shrink: 2;
     border-bottom: var(--border);
 }
 .tab-item {

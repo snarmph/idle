@@ -185,6 +185,11 @@ export class ExchangeResButton extends SimpleButton {
         this.condition = new ResourceCondition({ [this.give_res]: this.give_count });
         addListener(MessageTypes.resourceUpdate, () => this.checkCondition());
         this.update();
+        this.checkCondition();
+    }
+
+    updateText() {
+        this.setText(`Barter for ${this.get_count} ${Resources.name(this.get_res)}`);
     }
 
     update() {
@@ -192,10 +197,10 @@ export class ExchangeResButton extends SimpleButton {
             formatResource(this.give_res, -this.give_count),
             formatResource(this.get_res, this.get_count),
         ]);
+        this.updateText();
     }
 
     checkCondition() {
-        console.log(this.condition);
         if (this.condition.step()) {
             this.condition.reset();
             this.enable();
@@ -223,17 +228,16 @@ export class SellButton extends ExchangeResButton {
     setSellCount(count) {
         this.give_count = count;
         this.get_count = (this.value * this.value_multiplier) * count;
-        this.updateText();
         this.update();
     }
 
     setValueMultiplier(mul) {
         this.value_multiplier = mul;
         this.get_count = (this.value * this.value_multiplier) * this.give_count;
-        this.updateText();
         this.update();
     }
 
+    /* override */
     updateText() {
         let text = "Sell ";
         if (this.give_count === 1) text += "a";

@@ -42,7 +42,7 @@ export class Game {
         this.tab_manager.add(new SkillTreeTab());
 
         this.tab_manager.setActive(ForestTab.getId());
-        this.tab_manager.setActive(VillageTab.getId());
+        // this.tab_manager.setActive(VillageTab.getId());
 
         // save every 60 seconds
         setInterval(

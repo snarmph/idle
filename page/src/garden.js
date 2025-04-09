@@ -40,14 +40,14 @@ export const HouseLevels = makeEnum({
         name: "Castle",
         tiles: 25,
         show: {
-            [Resources.wood]: 10000,
-            [Resources.stone]: 5000,
-            [Resources.money]: 1000,
+            [Resources.wood]: 1000,
+            [Resources.stone]: 500,
+            [Resources.money]: 20,
         },
         cost: {
-            [Resources.wood]: 100000,
-            [Resources.stone]: 50000,
-            [Resources.money]: 100000,
+            [Resources.wood]: 10000,
+            [Resources.stone]: 5000,
+            [Resources.money]: 200,
         },
         time: 4.0,
     },
@@ -283,25 +283,14 @@ export class Garden {
         new SkillCondition(
             "fast_crops",
             (skill) => {
-                let spd_mul = 1.0;
-                switch (skill.upgrade) {
-                    case 0:
-                        spd_mul = 0.95;
-                        break;
-                    case 1:
-                        spd_mul = 0.90;
-                        break;
-                    case 2:
-                        spd_mul = 0.75;
-                        break;
-                    case 3:
-                        spd_mul = 0.50;
-                        break;
-                    case 4:
-                        spd_mul = 0.25;
-                        break;
-                }
-                console.log("speed: ", this.tiles[0].speed_multiplier * spd_mul);
+                let spd_mul = [
+                    0.95,
+                    0.90,
+                    0.75,
+                    0.50,
+                    0.25,
+                ];
+                spd_mul = spd_mul[skill.upgrade];
                 for (const tile of this.tiles) {
                     tile.speed_multiplier *= spd_mul;
                 }

@@ -18,9 +18,9 @@ export const PinpinType = makeEnum({
         value: 10,
         speed: 1.0,
     },
-    seller: {
-        name: "Seller Pinpin",
-        action_name: "sell some stuff",
+    miner: {
+        name: "Miner Pinpin",
+        action_name: "mine",
         value: 15,
         speed: 1.0,
     },
@@ -28,6 +28,12 @@ export const PinpinType = makeEnum({
         name: "Farmer Pinpin",
         action_name: "farm",
         value: 20,
+        speed: 1.0,
+    },
+    seller: {
+        name: "Seller Pinpin",
+        action_name: "sell some stuff",
+        value: 25,
         speed: 1.0,
     },
 })
@@ -45,6 +51,8 @@ export class Pinpin {
     }
 
     setup() {
+        if (this.count <= 0) return;
+
         this.interval_handle = setInterval(
             () => {
                 if (!this.is_paused) {
@@ -78,6 +86,7 @@ export class Pinpin {
     actionBase() {
         let pinpin_type = randomItem([
             PinpinType.explorer,
+            PinpinType.miner,
             PinpinType.seller,
             PinpinType.farmer,
         ]);
@@ -99,11 +108,16 @@ export class Pinpin {
         actions.farm(this.count);
     }
 
+    actionMiner() {
+        actions.mineStone(this.count);
+    }
+
     getActionForType(type) {
         switch (type) {
             case PinpinType.explorer: return () => this.actionExplorer();
-            case PinpinType.seller:   return () => this.actionSeller();
+            case PinpinType.miner:    return () => this.actionMiner();
             case PinpinType.farmer:   return () => this.actionFarmer();
+            case PinpinType.seller:   return () => this.actionSeller();
             default:                  return () => this.actionBase();
         }
     }

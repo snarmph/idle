@@ -24,7 +24,7 @@ export class VillageTab extends BaseTab {
 
     /* overload */ 
     onInit() {
-        this.show();
+        // this.show();
     }
 
     /* overload */ 
@@ -49,6 +49,9 @@ export class VillageTab extends BaseTab {
         this.village_elem.replaceChildren();
         for (const [id, data] of PinpinType.each()) {
             const pinpin = game.village.get(id);
+            if (pinpin.total <= 0) {
+                continue;
+            }
             const count = pinpin.count;
 
             const item = ui.htmlFromStr(
