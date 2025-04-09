@@ -1,0 +1,25 @@
+.village {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.pinpin-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+}
+
+.pinpin-data {
+    display: flex;
+}
+
+.pinpin-name {
+    width: 200px;
+}
+
+.pinpin-buttons {
+    display: flex;
+    gap: 20px;
+}

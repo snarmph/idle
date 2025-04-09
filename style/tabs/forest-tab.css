@@ -2,15 +2,11 @@
     height: 100%;
 }
 
-.forest-grid {
-    display: grid;
-    width: 100%;
-    height: 100%;
-    grid-template-columns: 1fr 1fr 2fr;
-    grid-template-rows: 1fr 100px;
-    grid-template-areas:
-        "none none none"
-        "seller seller seller";
+.forest-main {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 20px;
 }
 
 .forest-get-buttons, .forest-build-buttons {
@@ -40,24 +36,17 @@
 }
 
 #seller {
-    flex-direction: row;
+    flex-direction: column;
     grid-area: seller;
 }
 
 #seller .button {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
     width: auto;
     max-width: auto;
+    min-height: 50px;
 }
 
 #seller .button:active {
     border-color: var(--disabled-col);
     color: var(--disabled-col);
-}
-
-#seller .button[tooltip]::after {
-    left: 50%;
-    top: 100%;
 }

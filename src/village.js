@@ -37,6 +37,7 @@ export class Pinpin {
         this.type = type;
         this.count = count;
         this.total = count;
+        this.is_paused = false;
         this.interval_handle = null;
         this.speed = PinpinType.get(type, "speed");
         this.action = this.getActionForType(type);
@@ -45,7 +46,11 @@ export class Pinpin {
 
     setup() {
         this.interval_handle = setInterval(
-            () => this.action(),
+            () => {
+                if (!this.is_paused) {
+                    this.action();
+                }
+            },
             this.speed * 1000.0
         );
     }
@@ -102,6 +107,23 @@ export class Pinpin {
             default:                  return () => this.actionBase();
         }
     }
+
+    isPaused() {
+        return this.is_paused;
+    }
+
+    pause() {
+        this.is_paused = true;
+        sendMsg(MessageTypes.pinpinUpdate, { type: this.type, count: this.count, paused: this.is_paused });
+    }
+
+    unpause() {
+        if (this.is_paused) {
+            this.action();
+        }
+        this.is_paused = false;
+        sendMsg(MessageTypes.pinpinUpdate, { type: this.type, count: this.count, paused: this.is_paused });
+    }
 }
 
 export class Village {
@@ -149,6 +171,10 @@ export class Village {
         sendMsg(MessageTypes.pinpinUpdate, { type: type, count: this.pinpins[type].count });
     }
 
+    get(type) {
+        return this.pinpins[type];
+    }
+
     totalOf(type) {
         return this.pinpins[type].total;
     }
@@ -164,4 +190,5 @@ export class Village {
         }
         return total;
     }
+
 }

@@ -7,14 +7,12 @@ import { game } from "src/game.js"
 import { PinpinType } from "../village.js"
 import { formatNumber } from "../utils/num.js"
 
-export class Button {
-    constructor(id, parent, text, timeout_sec, onFinishedCallback) {
+export class SimpleButton {
+    constructor(id, parent, text, onClickCallback = null) {
         this.id = id;
-        this.start = 0;
         this.disabled = false;
-        this.setTimeout(timeout_sec);
         this.button = htmlFromStr(
-            `<div id="${id}" class="button"></div>`,
+            `<div id="${id}" class="button simple-button"></div>`,
             parent
         );
         this.button_inner = htmlFromStr(
@@ -25,25 +23,18 @@ export class Button {
             `<div class="button-text">${text}</div>`,
             this.button_inner
         );
-        this.cooldown = htmlFromStr(
-            `<div class="button-cooldown" style="width: 0%"></div>`,
-            this.button_inner
-        );
         this.onclicks = [];
         this.button.addEventListener("click", () => this.onClick());
         this.is_visible = true;
-        this.is_in_cooldown = false;
 
-        this.onFinished = () => {
-            onFinishedCallback();
+        if (onClickCallback) {
+            this.onclicks.push(onClickCallback);
         }
     }
 
     enable() {
-        if (this.is_in_cooldown) return;
         this.button.classList.remove("button-disabled");
         this.disabled = false;
-        this.cooldown.setAttribute("style", "width: 0%");
     }
 
     setText(text) {
@@ -63,46 +54,12 @@ export class Button {
         return !this.disabled;
     }
 
-    startCooldown() {
-        this.disable();
-        this.start = document.timeline.currentTime;
-        this.is_in_cooldown = true;
-        requestAnimationFrame((t) => this.cooldownStep(t));
-    }
-    
-    cooldownStep(timestamp) {
-        const time = timestamp - this.start;
-        const alpha = time / this.timeout;
-        if (alpha >= 1.0) {
-            this.finishCooldown();
-            return;
-        }
-        this.setCooldownBarWidth(alpha);
-        requestAnimationFrame((t) => this.cooldownStep(t));
-    }
-
-    setCooldownBarWidth(alpha) {
-        const width = lerp(100, 0, alpha);
-        this.cooldown.setAttribute("style", `width: ${width}%`);
-    }
-
-    finishCooldown() {
-        this.is_in_cooldown = false;
-        this.enable();
-        this.onFinished();
-    }
-
     onClick() {
         if (!this.disabled) {
             for (const func of this.onclicks) {
                 func();
             }
-            this.startCooldown();
         }
-    }
-
-    setTimeout(seconds) {
-        this.timeout = seconds * 1000.0;
     }
 
     setTooltipText(text) {
@@ -144,9 +101,67 @@ export class Button {
             this.button.click();
         }
     }
+}
+
+export class Button extends SimpleButton {
+    constructor(id, parent, text, timeout_sec, onFinishedCallback) {
+        super(id, parent, text);
+        
+        this.start = 0;
+        this.is_in_cooldown = false;
+        this.setTimeout(timeout_sec);
+        this.cooldown = htmlFromStr(
+            `<div class="button-cooldown" style="width: 0%"></div>`,
+            this.button_inner
+        );
+
+        this.onFinished = () => {
+            onFinishedCallback();
+        }
+
+        this.onclicks.push(() => this.startCooldown());
+    }
+
+    enable() {
+        if (this.is_in_cooldown) return;
+        super.enable();
+    }
+
+    startCooldown() {
+        this.disable();
+        this.start = document.timeline.currentTime;
+        this.is_in_cooldown = true;
+        requestAnimationFrame((t) => this.cooldownStep(t));
+    }
+    
+    cooldownStep(timestamp) {
+        const time = timestamp - this.start;
+        const alpha = time / this.timeout;
+        if (alpha >= 1.0) {
+            this.finishCooldown();
+            return;
+        }
+        this.setCooldownBarWidth(alpha);
+        requestAnimationFrame((t) => this.cooldownStep(t));
+    }
+
+    setCooldownBarWidth(alpha) {
+        const width = lerp(100, 0, alpha);
+        this.cooldown.setAttribute("style", `width: ${width}%`);
+    }
+
+    finishCooldown() {
+        this.is_in_cooldown = false;
+        this.enable();
+        this.onFinished();
+    }
+
+    setTimeout(seconds) {
+        this.timeout = seconds * 1000.0;
+    }
 };
 
-export class ExchangeResButton extends Button {
+export class ExchangeResButton extends SimpleButton {
     constructor(get_res, get_count, give_res, give_count, parent) {
         let text = `Barter for ${get_count} ${Resources.name(get_res)}`;
 
@@ -154,8 +169,12 @@ export class ExchangeResButton extends Button {
             `exchange-button-${Resources.key(get_res)}`,
             parent,
             text,
-            0.,
-            () => this.checkCondition()
+            () => {
+                game.inventory.remove(this.give_res, this.give_count);
+                game.inventory.add(this.get_res, this.get_count);
+                this.disable();
+                this.checkCondition()
+            }
         );
 
         this.get_res = get_res;
@@ -163,12 +182,6 @@ export class ExchangeResButton extends Button {
         this.give_res = give_res;
         this.give_count = give_count;
 
-        this.cooldown.remove();
-        this.addOnClick(() => {
-            game.inventory.remove(this.give_res, this.give_count);
-            game.inventory.add(this.get_res, this.get_count);
-            this.disable();
-        });
         this.condition = new ResourceCondition({ [this.give_res]: this.give_count });
         addListener(MessageTypes.resourceUpdate, () => this.checkCondition());
         this.update();
@@ -182,6 +195,7 @@ export class ExchangeResButton extends Button {
     }
 
     checkCondition() {
+        console.log(this.condition);
         if (this.condition.step()) {
             this.condition.reset();
             this.enable();

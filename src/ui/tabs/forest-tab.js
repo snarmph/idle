@@ -20,7 +20,7 @@ export class ForestTab extends BaseTab {
         super(ForestTab.getId(), "Forest");
 
         this.grid_elem = ui.htmlFromStr(
-            `<div class="forest-grid"></div>`,
+            `<div class="forest-main"></div>`,
             this.content_element
         )
         this.get_elem = ui.htmlFromStr(
@@ -31,18 +31,22 @@ export class ForestTab extends BaseTab {
             `<div class="forest-build-buttons"></div>`,
             this.grid_elem
         );
-        this.data_elem = ui.htmlFromStr(
-            `<div class="forest-data"></div>`,
-            this.grid_elem
-        );
+        // this.data_elem = ui.htmlFromStr(
+        //     `<div class="forest-data"></div>`,
+        //     this.grid_elem
+        // );
 
         this.categories = {
-            resources: new ui.Category("forest-resources", this.data_elem, "Resources"),
-            pinpins: new ui.Category("forest-pinpins", this.data_elem, "Pinpins"),
+            resources: document.getElementById("resources-category"), 
+            pinpins: document.getElementById("pinpins-category"), 
+            // new ui.Category("forest-resources", this.data_elem, "Resources"),
+            // pinpins: new ui.Category("forest-pinpins", this.data_elem, "Pinpins"),
         }
 
         for (const [_, cat] of Object.entries(this.categories)) {
-            ui.makeInvisible(cat.element);
+            // ui.makeInvisible(cat.element);
+            console.log(_, cat);
+            ui.makeInvisible(cat);
         }
 
         this.res_data = [];
@@ -54,7 +58,7 @@ export class ForestTab extends BaseTab {
                     <div class="item-name">${res.name}</div>
                 </div>
                 `, 
-                this.categories.resources.element
+                this.categories.resources
             );
             const count = ui.htmlFromStr(
                 `<div class="item-quantity">0</div>`, 
@@ -77,7 +81,7 @@ export class ForestTab extends BaseTab {
                     <div class="item-name">${pin.name}</div>
                 </div>
                 `, 
-                this.categories.pinpins.element
+                this.categories.pinpins
             );
             const count = ui.htmlFromStr(
                 `<div class="item-quantity">0</div>`, 
@@ -154,7 +158,7 @@ export class ForestTab extends BaseTab {
                 const res = this.res_data[data.id];
                 res.count.textContent = formatNumber(data.count);
                 ui.makeVisible(res.container);
-                ui.makeVisible(this.categories.resources.element);
+                ui.makeVisible(this.categories.resources);
 
                 this.stepHouseCondition();
             }
@@ -166,7 +170,7 @@ export class ForestTab extends BaseTab {
                 const pin = this.pinpins_data[data.type];
                 pin.count.textContent = formatNumber(data.count);
                 ui.makeVisible(pin.container);
-                ui.makeVisible(this.categories.pinpins.element);
+                ui.makeVisible(this.categories.pinpins);
 
                 this.skill_condition.step();
             }
