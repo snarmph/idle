@@ -3,6 +3,7 @@ import { MessageTypes, sendMsg } from "src/messages.js"
 import { getRandomInt } from "src/utils/rand.js"
 import { game } from "src/game.js"
 import * as actions from "src/actions.js"
+import { randomItem } from "./utils/rand.js"
 
 export const PinpinType = makeEnum({
     base: {
@@ -70,8 +71,12 @@ export class Pinpin {
     }
     
     actionBase() {
-        const pinpin_type = getRandomInt(1, game.village.max_pinpin_level + 1);
-        if (pinpin_type <= 0) return;
+        let pinpin_type = randomItem([
+            PinpinType.explorer,
+            PinpinType.seller,
+            PinpinType.farmer,
+        ]);
+
         game.log(`${this.count} ${PinpinType.name(this.type)} decided to ${PinpinType.get(pinpin_type, "action_name")}`)
         const action = this.getActionForType(pinpin_type);
         action();
@@ -142,6 +147,10 @@ export class Village {
     remove(type, count = 1) {
         this.pinpins[type].remove(count);
         sendMsg(MessageTypes.pinpinUpdate, { type: type, count: this.pinpins[type].count });
+    }
+
+    totalOf(type) {
+        return this.pinpins[type].total;
     }
 
     countOf(type) {

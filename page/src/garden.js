@@ -90,7 +90,7 @@ export class GardenTile {
         this.state = TileState.dirt;
         this.resource = Resources.wheat;
         this.num_multiplier = 1;
-        this.speed_multiplier = 0.01;
+        this.speed_multiplier = 1;
         this.condition = null;
         this.listener_id = null;
         this.timer = null;

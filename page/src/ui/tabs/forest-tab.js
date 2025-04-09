@@ -134,7 +134,7 @@ export class ForestTab extends BaseTab {
 
         this.skill_condition = new Condition(
             () => {
-                if (game.village.countOf(PinpinType.base) < 3) {
+                if (game.village.totalOf(PinpinType.base) < 3) {
                     return false;
                 }
                 if (game.garden.house < HouseLevels.house) {
@@ -277,9 +277,11 @@ export class ForestTab extends BaseTab {
     }
 
     showSeller() {
-        ui.makeVisible(this.extra.parentElement);
-        ui.makeVisible(this.seller.category.element);
-        this.seller.animate();
+        if (this.is_active) {
+            ui.makeVisible(this.extra.parentElement);
+            ui.makeVisible(this.seller.category.element);
+            this.seller.animate();
+        }
         // this.animateSeller();
     }
 
