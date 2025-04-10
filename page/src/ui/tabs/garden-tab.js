@@ -1,162 +1,139 @@
 import * as ui from "src/ui/base.js"
+import * as num from "src/utils/num.js"
+import * as rand from "src/utils/rand.js"
 import { BaseTab } from "src/ui/tab.js"
-import { Button } from "src/ui/button.js"
 import { game } from "src/game.js"
+import { Button, CooldownButton } from "src/ui/button.js"
 import { Resources } from "src/inventory.js"
-import { PinpinType } from "src/village.js"
-import { addListener, MessageTypes } from "src/messages.js"
 import { HouseLevels, TileState } from "src/garden.js"
 import { Colours } from "src/log.js"
-import { formatRaw } from "src/utils/num.js"
 
 let house_animations = [];
 
-class TileButton extends Button {
+class TileButton extends CooldownButton {
     constructor(index, parent) {
         super(
-            `garden-tile-${index}`, parent, "tile-text"
-        )
+            `garden-tile-${index}`, 
+            parent, 
+            "tile-text",
+            0,
+            null,
+            () => game.garden.tiles[this.index].start()
+        );
         this.count = 0;
 
         this.index = index;
-        this.button.classList.add("garden-tile-button");
-
-        const tile = game.garden.tiles[this.index];
-        tile.on_start_cooldown = () => this.disable();
-        tile.on_step_cooldown = (alpha) => this.setCooldownBarWidth(alpha);
-        tile.on_end_cooldown = () => this.update();
-        this.update();
+        this.state = null;
+        this.element.classList.add("garden-tile-button");
     }
 
-    update() {
+    tick(dt) {
+        if (this.index >= game.garden.tiles.length) return;
+        this.is_in_cooldown = false;
+
         const tile = game.garden.tiles[this.index];
-        const state = TileState.fromIndex(tile.state);
+
+        this.setCooldownBarWidth(tile.getAlpha());
+        this.setEnabled(tile.check());
+
+        if (this.state != tile.state) {
+            this.state = tile.state;
+            this.updateText();
+        }
+    }
+
+    updateText() {
+        const state = TileState.fromIndex(this.state);
         let text = state.name;
         if ("icon" in state) {
             const colour = Colours.fromIndex(state.icon.colour);
             text += ` <span class="garden-tile-emoji" style="color: var(--${colour})">${state.icon.text}</span>`
         }
-        this.setButtonContent(text);
-
-        if (!tile.check()) this.disable();
-        else               this.enable();
-    }
-
-    /* override */
-    onClick() {
-        game.garden.tiles[this.index].tryNext();
+        this.setContent(text);
     }
 }
 
 export class GardenTab extends BaseTab {
     constructor() {
-        super(GardenTab.getId(), "House");
+        super(GardenTab.getId(), "Garden");
 
         this.tiles_elem = ui.htmlFromStr(
             `<div class="garden-tiles"></div>`,
             this.content_element
         );
 
-        this.level = null;
         this.tiles = [];
+        this.level = null;
 
         this.anim_index = 0;
-        this.anim_id = null;
-
-        addListener(MessageTypes.houseUpgrade, (data) => {
-            this.onHouseUpgrade(data.level);
-        })
+        this.anim_time = 500;
     }
 
-    /* overload */ 
+    /* override */ 
     static getId() {
-        return "garden"; 
+        return "garden";
     }
 
-    /* overload */ 
+    /* override */ 
     onInit() {
-        //game.garden.upgrade();
-        //game.garden.upgrade();
-        //game.garden.upgrade();
-        //this.show();
+        for (let i = 0; i < 25; ++i) {
+            const tile = new TileButton(i, this.tiles_elem);
+            tile.setVisible(false);
+            this.tiles.push(tile);
+        }
     }
 
-    /* overload */ 
+    /* override */ 
     onVisible() {
-        addListener(
-            MessageTypes.resourceUpdate, 
-            () => {
-                for (let i = 0; i < this.tiles.length; ++i) {
-                    const garden_tile = game.garden.tiles[i];
-                    if (garden_tile.check()) {
-                        this.tiles[i].enable();
-                    }
-                    else {
-                        this.tiles[i].disable();
-                    }
-                }
-            }
-        );
-        addListener(
-            MessageTypes.gardenUpdate,
-            (data) => {
-                this.tiles[data.index].update();
-                if (data.harvest) {
-                    let msg = "Harvested ";
-                    for (let i = 0; i < data.harvest.length; ++i) {
-                        const res = data.harvest[i];
-                        msg += `${res.name}: ${formatRaw(res.count)}`;
-                        if (i + 1 < data.harvest.length) msg += ", ";
-                    }
-                    game.log(msg);
-                }
-            }
-        )
-        addListener(
-            MessageTypes.pinpinAction,
-            (data) => {
-                if (data.type !== PinpinType.farmer) {
-                    return;
-                }
-                this.tiles[data.index].click();
-            }
-        )
+
     }
 
-    /* overload */ 
+    /* override */ 
     onSelected() {
-        ui.makeVisible(this.extra.parentElement);
+        ui.setVisible(this.extra.parentElement);
         this.anim_index = 0;
-        this.updateAnimation();
-        this.anim_id = setInterval(() => this.updateAnimation(), 500);
+        this.extra.textContent = house_animations[game.garden.level - 1][this.anim_index];
     }
 
-    /* overload */ 
+    /* override */ 
+    onPassiveTick(dt) {
+        if (game.garden.level != this.level) {
+            this.onHouseUpgrade();
+        }
+    }
+
+    /* override */ 
+    onActiveTick(dt) {
+        this.updateAnimation(dt);
+        for (const tile of this.tiles) {
+            tile.tick(dt);
+        }
+    }
+
+    /* override */ 
     onExitSelected() {
-        ui.makeInvisible(this.extra.parentElement);
-        clearInterval(this.anim_id);
-        this.anim_id = null;
-        this.anim_index = 0;
+        ui.setVisible(this.extra.parentElement, false);
     }
 
-    onHouseUpgrade(level) {
-        if (level === HouseLevels.tent) {
-            this.show();
+    onHouseUpgrade() {
+        this.level = game.garden.level;
+        const data = HouseLevels.fromIndex(this.level);
+        this.updateName(data.name);
+        for (let i = 0; i < data.tiles; ++i) {
+            this.tiles[i].setVisible(true);
         }
-        this.level = level;
         this.anim_index = 0;
-        this.updateName(HouseLevels.name(level));
-        const old_len = this.tiles.length;
-        const len = game.garden.tiles.length;
-        for (let i = old_len; i < len; ++i) {
-            this.tiles.push(new TileButton(i, this.tiles_elem));
-        }
+        this.anim_time = 0;
     }
 
-    updateAnimation() {
-        const anim = house_animations[this.level - 1];
-        this.extra.textContent = anim[this.anim_index];
-        this.anim_index = (this.anim_index + 1) % anim.length;
+    updateAnimation(dt) {
+        this.anim_time -= dt;
+        while (this.anim_time < 0) {
+            this.anim_time += 500;
+            const anim = house_animations[game.garden.level - 1];
+            this.anim_index = (this.anim_index + 1) % anim.length;
+            this.extra.textContent = anim[this.anim_index];
+        }
     }
 }
 

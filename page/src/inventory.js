@@ -1,58 +1,36 @@
-import { MessageTypes, sendMsg } from "src/messages.js"
-import { makeEnum } from "src/utils/enum.js";
+import * as enums from "src/utils/enum.js"
 
-export const Resources = makeEnum({
+export const Resources = enums.make({
     wood: {
         name: "wood",
     },
     seeds: {
         name: "seeds",
-        singular: "seed",
     },
     wheat: {
         name: "wheat",
-        value: 0.2,
     },
     stone: {
         name: "stone",
-        value: 0.01,
-    },
-    money: {
-        name: "coins",
-        singular: "coin",
     },
 })
-
 
 export class Resource {
     constructor(id, count, total) {
         this.id = id;
         this.count = count;
         this.total = total;
-        this.value = Resources.get(id, "value", 0);
-    }
-
-    set(count) {
-        this.count = count;
-        this._sendMessage();
     }
 
     add(n) {
         this.total += n;
         this.count += n;
-        this._sendMessage();
     }
 
-    remove(n) {
+    rem(n) {
         this.count -= n;
-        if (this.count < 0) console.error(`count is < 0: ${Resources.name(this.id)}: ${this.count}`);
-        this._sendMessage();
     }
-
-    _sendMessage() {
-        sendMsg(MessageTypes.resourceUpdate, { id: this.id, count: this.count });
-    }
-};
+}
 
 export class Inventory {
     constructor() {
@@ -62,38 +40,36 @@ export class Inventory {
         }
     }
 
-    init() {
-        
+    add(id, n) {
+        this.resources[id].add(n);
     }
 
-    getSaveData() {
-        let data = {};
-        for (const id in this.resources) {
-            const res = this.resources[id];
-            if (res.total > 0) {
-                data[id] = {
-                    count: res.count,
-                    total: res.total,
-                }
+    rem(id, n) {
+        this.resources[id].rem(n);
+    }
+
+    hasEnough(resources) {
+        if (!resources) return true;
+        for (const [id, count] of Object.entries(resources)) {
+            if (this.resources[id].count < count) {
+                return false;
             }
         }
-        return data;
+        return true;
     }
 
-    loadSaveData(data) {
-        for (const [id, item] of Object.entries(data)) {
-            const res = this.resources[id];
-            res.total = item.total;
-            res.set(item.count);
+    addMultiple(resources) {
+        if (!resources) return true;
+        for (const [id, count] of Object.entries(resources)) {
+            this.add(id, count);
         }
     }
 
-    add(id, count) {
-        this.resources[id].add(count);
-    }
-
-    remove(id, count) {
-        this.resources[id].remove(count);
+    removeMultiple(resources) {
+        if (!resources) return true;
+        for (const [id, count] of Object.entries(resources)) {
+            this.rem(id, count);
+        }
     }
 
     countOf(id) {
@@ -104,15 +80,15 @@ export class Inventory {
         return this.resources[id].total;
     }
 
-    buy(id, count = 1) {
-        const value = this.resources[id].value;
-        this.resources[Resources.money].remove(value * count);
-        this.resources[id].add(count);
+    count() {
+        let total = 0;
+        for (const res of this.resources) {
+            total += res.count;
+        }
+        return total;
     }
 
-    sell(id, count = 1) {
-        const value = this.resources[id].value;
-        this.resources[id].remove(count);
-        this.resources[Resources.money].add(value * count);
+    get(id) {
+        return this.resources[id];
     }
 }

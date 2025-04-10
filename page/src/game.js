@@ -1,86 +1,94 @@
-import { Logger, Colours }  from "src/log.js"
+import { Logger, Colours } from "src/log.js";
+
+import { Options } from "src/options.js";
+import { Inventory } from "src/inventory.js";
+import { Garden } from "src/garden.js";
+
 import { TabManager } from "src/ui/tab.js";
+import { OptionsTab } from "src/ui/tabs/options-tab.js";
+import { ForestTab } from "src/ui/tabs/forest-tab.js";
+import { GardenTab } from "src/ui/tabs/garden-tab.js";
+import { Village } from "src/village.js";
 
-import { Inventory }  from "src/inventory.js";
-import { Garden }  from "src/garden.js";
-import { Village } from "src/village.js"
-import { Options } from "src/options.js"
-import { SkillTree } from "src/skill-tree.js";
-import { SaveData } from "src/save.js";
 
-import { ForestTab } from "src/ui/tabs/forest-tab.js"
-import { GardenTab } from "src/ui/tabs/garden-tab.js"
-import { OptionsTab } from "src/ui/tabs/options-tab.js"
-import { SkillTreeTab } from "src/ui/tabs/skilltree-tab.js";
-import { VillageTab } from "./ui/tabs/village-tab.js";
-
-export class Game {
+class Game {
     constructor() {
-        this.logger      = new Logger();
+        this.start_time = document.timeline.currentTime;
+        this.prev_time = this.start_time;
+        this.fps = 60;
+        this.dt = 1000.0 / this.fps;
+        this.accumulated = 0;
+
+        this.frame = 0;
+
         this.tab_manager = new TabManager();
-        this.save_data   = new SaveData();
-
-        this.inventory  = new Inventory();
-        this.village    = new Village();
-        this.garden     = new Garden();
-        this.options    = new Options();
-        this.skill_tree = new SkillTree();
-
-        this.is_loading = false;
     }
 
     init() {
-        this.inventory.init();
-        this.village.init();
-        this.garden.init();
-        this.skill_tree.init();
+        this.logger = new Logger();
+
+        this.options   = new Options();
+        this.inventory = new Inventory();
+        this.garden    = new Garden();
+        this.village   = new Village();
 
         this.tab_manager.add(new ForestTab());
         this.tab_manager.add(new GardenTab());
-        this.tab_manager.add(new VillageTab());
         this.tab_manager.add(new OptionsTab());
-        this.tab_manager.add(new SkillTreeTab());
 
         this.tab_manager.setActive(ForestTab.getId());
-        // this.tab_manager.setActive(VillageTab.getId());
 
-        // save every 60 seconds
-        setInterval(
-            () => this.save(),
-            60_000 
-        );
-        this.load();
+        this.loop(this.now());
+    }
+
+    now() {
+        return document.timeline.currentTime;
+    }
+
+    loop(time) {
+        let passed = time - this.prev_time;
+        if (passed >= this.dt) {
+            this.prev_time = time;
+
+            while (passed >= this.dt) {
+                passed -= this.dt;
+                this.frame++;
+                this.tick()
+            }
+
+            this.accumulated += passed;
+
+            while (this.accumulated >= this.dt) {
+                this.accumulated -= this.dt;
+                this.frame++;
+                this.tick();
+            }
+        }
+
+        requestAnimationFrame((time) => this.loop(time))
+    }
+
+    tick() {
+        this.tab_manager.tick(game.dt);
+
+        this.garden.tick(game.dt);
+        this.village.tick(game.dt);
     }
 
     save() {
-        console.log("saving...");
-        this.save_data.add("inventory");
-        this.save_data.add("village");
-        this.save_data.add("garden");
-        this.save_data.add("skill_tree");
 
-        this.save_data.save();
     }
 
     load() {
-        this.is_loading = true;
 
-        if (!this.save_data.tryLoad()) {
-            console.log("no save data");
-        }
-
-        this.is_loading = false;
     }
 
-    log(msg, color = Colours.default) {
-        if (this.is_loading) return;
-
-        this.logger.print(msg, color);
+    log(msg, col = Colours.default) {
+        this.logger.print(msg, col);
     }
 }
 
 export let game = null;
-
 export function gameInit() {
     game = new Game();
     game.init();

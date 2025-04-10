@@ -1,25 +1,27 @@
-import * as ui from "src/ui/base.js"
+import { htmlFromStr } from "src/ui/base.js";
+import { makeVisible, makeInvisible } from "src/ui/base.js";
 
 export class BaseTab {
     constructor(id, name) {
         this.id = id;
-        this.name = name;
         this.tab_id = `tab-${id}`;
         this.content_id = `content-${id}`;
+        this.name = name;
         this.is_active = false;
         this.is_visible = false;
 
-        this.tab_elem = ui.htmlFromStr(
+        this.tab_elem = htmlFromStr(
             `<div id="${this.tab_id}" class="tab-item">${this.name}</div>`
         )
-        this.tab_content = ui.htmlFromStr(
+        this.tab_content = htmlFromStr(
             `<div class="tab-content-item hidden"></div>`
         )
-        this.content_element = ui.htmlFromStr(
+        this.content_element = htmlFromStr(
             `<div id="${this.content_id}"></div>`,
             this.tab_content
         );
 
+        this.tab_header = document.getElementById(this.tab_id);
         this.extra = document.getElementById("extra");
     }
 
@@ -30,19 +32,20 @@ export class BaseTab {
 
     setActive(is_active = true) {
         this.is_active = is_active;
-        ui.setVisible(this.tab_content, is_active);
         if (is_active) {
             this.tab_elem.classList.add("tab-active");
+            this.tab_content.classList.remove("hidden");
         }
         else {
             this.tab_elem.classList.remove("tab-active");
+            this.tab_content.classList.add("hidden");
         }
     }
-    
+
     show() {
         if (this.is_visible) return;
         this.is_visible = true;
-        ui.setVisible(this.tab_elem, true);
+        makeVisible(this.tab_elem);
         this.onVisible();
     }
 
@@ -50,8 +53,6 @@ export class BaseTab {
     /* virtual */ onInit() {}
     /* virtual */ onVisible() {}
     /* virtual */ onSelected() {}
-    /* virtual */ onActiveTick(dt) {}
-    /* virtual */ onPassiveTick(dt) {}
     /* virtual */ onExitSelected() {}
 }
 
@@ -63,10 +64,10 @@ export class TabManager {
         this.tabs = {};
         this.active = null;
     }
-    
+
     add(tab) {
         tab.tab_elem.addEventListener("click", (elem) => this.onClick(elem));
-        ui.setVisible(tab.tab_elem, false);
+        makeInvisible(tab.tab_elem);
         this.header.insertBefore(tab.tab_elem, this.filler);
 
         this.tabs[tab.id] = tab;
@@ -74,7 +75,7 @@ export class TabManager {
 
         tab.onInit();
     }
-    
+
     setActive(tab_or_id) {
         const id = tab_or_id;
         if (typeof(tab_or_id) !== "string") {
@@ -98,17 +99,10 @@ export class TabManager {
         this.tabs[id].show();
     }
 
-    tick(dt) {
-        for (const [_, tab] of Object.entries(this.tabs)) {
-            tab.onPassiveTick(dt);
-        }
-        this.active.onActiveTick(dt);
-    }
-
     onClick(elem) {
         if (this.active.tab_elem === elem.target) {
             return;
         }
-        this.setActive(elem.target.id.slice(4)); // remove tab-
+        this.setActive(elem.target.id.slice(4));
     }
 }

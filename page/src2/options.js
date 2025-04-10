@@ -1,4 +1,4 @@
-import * as num from "src/utils/num.js"
+import { setNumberFormatter, getNumberFormatter } from "src/utils/num.js"
 
 export class Options {
     constructor() {
@@ -11,9 +11,5 @@ export class Options {
         document.body.classList.add(add_remove[Number(this.dark_mode)][0]);
         document.body.classList.remove(add_remove[Number(this.dark_mode)][1]);
         return this.dark_mode;
-    }
-
-    setFormatter(formatter) {
-        num.setFormatter(formatter);
     }
 }

@@ -65,3 +65,11 @@ TODO
 
 
 
+================================
+
+- update every frame!
+- pause when you lose focus?
+- pinpins don't have random chance, they get stuff per second
+- no seller pinpins
+- no money resource
+- more automatic at the beginning

@@ -1,41 +1,35 @@
-import { makeEnum } from "src/utils/enum.js"
-import { MessageTypes, sendMsg, addListener } from "src/messages.js"
-import { getRandomInt, randomEvent, randomItem } from "src/utils/rand.js"
+import * as enums from "src/utils/enum.js"
+import * as rand from "src/utils/rand.js"
 import { game } from "src/game.js"
-import * as actions from "src/actions.js"
-import { SkillCondition } from "src/condition.js"
-import { Colours } from "src/log.js"
+import { Resources } from "src/inventory.js"
 
-export const PinpinType = makeEnum({
+export const PinpinType = enums.make({
     base: {
         name: "Stupid Pinpin",
         action_name: "",
         value: 5,
-        speed: 5.0,
+        cooldown: 1,
     },
     explorer: {
         name: "Explorer Pinpin",
         action_name: "explore the wilderness",
         value: 10,
-        speed: 1.0,
     },
     miner: {
         name: "Miner Pinpin",
         action_name: "mine",
         value: 15,
-        speed: 1.0,
     },
     farmer: {
         name: "Farmer Pinpin",
         action_name: "farm",
         value: 20,
-        speed: 1.0,
+        cooldown: 2,
     },
     seller: {
         name: "Seller Pinpin",
         action_name: "sell some stuff",
         value: 25,
-        speed: 1.0,
     },
 })
 
@@ -47,202 +41,108 @@ export class Pinpin {
         this.breeding = {
             chance: 0,
             time: 0,
-            interval_id: null,
         };
-        this.is_paused = false;
-        this.interval_handle = null;
-        this.speed = PinpinType.get(type, "speed");
+        this.aps = 1.0;
         this.action = this.getActionForType(type);
-        this.interval_handle = null;
-    }
 
-    setup() {
-        if (this.count <= 0) return;
-
-        this.interval_handle = setInterval(
-            () => {
-                if (!this.is_paused) {
-                    this.action();
-                }
-            },
-            this.speed * 1000.0
-        );
-    }
-
-    reset() {
-        clearInterval(this.interval_handle);
+        this.cooldown = PinpinType.get(this.type, "cooldown", 0) * 1000;
+        this.elapsed = this.cooldown;
     }
 
     add(count) {
         this.count += count;
         this.total += count;
-        if ((this.count - count) === 0) {
-            this.setup();
-        }
     }
 
-    remove(count) {
+    rem(count) {
         this.count -= count;
-        if (this.count < 0) console.error(`${PinpinType.name(this.type)} count is < 0: ${this.count}`);
-        if (this.count === 0) {
-            this.reset();
+    }
+
+    tick(dt) {
+        if (this.count <= 0) return;
+        
+        if (this.cooldown > 0) {
+            this.elapsed += dt;
+            while (this.elapsed >= this.cooldown) {
+                this.elapsed -= this.cooldown;
+                this.action(dt);
+            }
+        }
+        else {
+            this.action(dt);
         }
     }
-    
-    actionBase() {
-        let pinpin_type = randomItem([
+        
+    actionBase(dt) {
+        let pinpin_type = rand.choose([
             PinpinType.explorer,
             PinpinType.miner,
-            PinpinType.seller,
             PinpinType.farmer,
         ]);
 
-        game.log(`${this.count} ${PinpinType.name(this.type)} decided to ${PinpinType.get(pinpin_type, "action_name")}`)
         const action = this.getActionForType(pinpin_type);
-        action();
+        action(1000);
     }
     
-    actionExplorer() {
-        actions.exploreForest(this.count);
+    actionExplorer(dt) {
+        const res = {
+            [Resources.wood]: this.aps * dt * 0.001,
+            [Resources.seeds]: (this.aps * 0.01) * dt * 0.001,
+        }
+        game.inventory.addMultiple(res);
     }
 
-    actionSeller() {
-        actions.trySell(1, this.count);
+    actionSeller(dt) {
+        // TODO
     }
 
-    actionFarmer() {
-        actions.farm(this.count);
+    actionFarmer(dt) {
+        let pin_count = this.count;
+        for (const tile of game.garden.tiles) {
+            let needed = tile.getPinpinNeeded();
+            if (pin_count >= needed && tile.check()) {
+                tile.start();
+                pin_count -= needed;
+                if (pin_count <= 0) {
+                    return;
+                }
+            }
+        }
     }
 
-    actionMiner() {
-        actions.mineStone(this.count);
+    actionMiner(dt) {
+        const stone_ps = 1.0 * this.aps * 0.001;
+        const stone = stone_ps * dt;
+        console.log(stone);
+        game.inventory.add(Resources.stone, stone);
     }
 
     getActionForType(type) {
         switch (type) {
-            case PinpinType.explorer: return () => this.actionExplorer();
-            case PinpinType.miner:    return () => this.actionMiner();
-            case PinpinType.farmer:   return () => this.actionFarmer();
-            case PinpinType.seller:   return () => this.actionSeller();
-            default:                  return () => this.actionBase();
+            case PinpinType.explorer: return (dt) => this.actionExplorer(dt);
+            case PinpinType.miner:    return (dt) => this.actionMiner(dt);
+            case PinpinType.farmer:   return (dt) => this.actionFarmer(dt);
+            case PinpinType.seller:   return (dt) => this.actionSeller(dt);
+            default:                  return (dt) => this.actionBase(dt);
         }
-    }
-
-    isPaused() {
-        return this.is_paused;
-    }
-
-    pause() {
-        this.is_paused = true;
-        sendMsg(MessageTypes.pinpinUpdate, { type: this.type, count: this.count, paused: this.is_paused });
-    }
-
-    unpause() {
-        if (this.is_paused) {
-            this.action();
-        }
-        this.is_paused = false;
-        sendMsg(MessageTypes.pinpinUpdate, { type: this.type, count: this.count, paused: this.is_paused });
     }
 }
 
 export class Village {
     constructor() {
-        this.pinpins = {};
-        this.max_pinpin_level = -1;
+        this.pinpins = [];
 
         for (const [id, _] of PinpinType.each()) {
             this.pinpins[id] = new Pinpin(id, 0);
         }
     }
 
-    init() {
-        new SkillCondition(
-            "pinpin_breeding", 
-            (skill) => {
-                const breed = [
-                    { chance: 0.0001, time: 5.0 },
-                    { chance: 0.001,  time: 3.0 },
-                    { chance: 0.002,  time: 1.0 },
-                    { chance: 0.005,  time: 0.5 },
-                ];
-                const chance = breed[skill.upgrade].chance;
-                const time = breed[skill.upgrade].time;
-                this.startBreeding(PinpinType.base, chance, time);
-            }
-        )
-        new SkillCondition(
-            "special_breed",
-            (skill) => {
-                const breed = [
-                    { chance: 0.0001, time: 10.0 },
-                    { chance: 0.001,  time:  5.0 },
-                    { chance: 0.002,  time:  2.5 },
-                    { chance: 0.005,  time:  1.0 },
-                ];
-                const chance = breed[skill.upgrade].chance;
-                const time = breed[skill.upgrade].time;
-                for (const [id, pin] of Object.entries(this.pinpins)) {
-                    if (id === PinpinType.base) continue;
-                    this.startBreeding(id, chance, time);
-                }
-            }
-        )
-    }
-
-    startBreeding(type, chance, time) {
-        const pinpin = this.pinpins[type];
-        clearInterval(pinpin.breeding.interval_id);
-        pinpin.breeding.chance = chance;
-        pinpin.breeding.time = time;
-        console.log(time * 1000);
-        pinpin.breeding.interval_id = setInterval(
-            () => {
-                if (pinpin.count < 2) {
-                    return;
-                }
-
-                const couples = Math.floor(pinpin.count * 0.5);
-                const new_pinpins = randomEvent(pinpin.breeding.chance, couples);
-                if (new_pinpins <= 0) {
-                    return;
-                }
-
-                this.add(type, new_pinpins);
-            },
-            time * 1000
-        );
-    }
-
-    getSaveData() {
-        let data = {};
-        for (const [id, item] of Object.entries(this.pinpins)) {
-            if (item.total > 0) {
-                data[id] = {
-                    count: item.count,
-                    total: item.total,
-                }
-            }
-        }
-        return data;
-    }
-
-    loadSaveData(data) {
-        for (const [id, item] of Object.entries(data)) {
-            this.pinpins[id].total = item.total;
-            this.add(id, item.count);
-        }
-    }
-
     add(type, count = 1) {
-        if (type > this.max_pinpin_level) this.max_pinpin_level = type;
         this.pinpins[type].add(count);
-        sendMsg(MessageTypes.pinpinUpdate, { type: type, count: this.pinpins[type].count });
     }
 
-    remove(type, count = 1) {
-        this.pinpins[type].remove(count);
-        sendMsg(MessageTypes.pinpinUpdate, { type: type, count: this.pinpins[type].count });
+    rem(type, count = 1) {
+        this.pinpins[type].rem(count);
     }
 
     get(type) {
@@ -259,10 +159,15 @@ export class Village {
 
     count() {
         let total = 0;
-        for (const [_, item] of Object.entries(this.pinpins)) {
-            total += item.count;
+        for (const pin of this.pinpins) {
+            total += pin.count;
         }
         return total;
     }
 
+    tick(dt) {
+        for (const pin of this.pinpins) {
+            pin.tick(dt);
+        }
+    }
 }
