@@ -1,57 +1,97 @@
-import { htmlFromStr } from "src/ui/base.js"
-import { lerp, formatResource } from "src/utils/num.js"
-import { ResourceCondition } from "src/condition.js"
-import { MessageTypes, addListener } from "src/messages.js"
-import { Resources } from "src/inventory.js"
+import * as ui from "src/ui/base.js"
+import * as num from "src/utils/num.js"
 import { game } from "src/game.js"
-import { PinpinType } from "../village.js"
-import { formatNumber } from "../utils/num.js"
+import { PinpinType } from "src/village.js";
+import { Resources } from "src/inventory.js";
 
-export class SimpleButton {
-    constructor(id, parent, text, onClickCallback = null) {
+export class Button {
+    constructor(id, parent, text, onClickCb = null) {
         this.id = id;
         this.disabled = false;
-        this.button = htmlFromStr(
-            `<div id="${id}" class="button simple-button"></div>`,
+        this.is_visible = true;
+        this.onclicks = [];
+        if (onClickCb) this.onclicks.push(onClickCb);
+
+        this.element = ui.htmlFromStr(
+            `<div id="${id}" class="button"></div>`,
             parent
         );
-        this.button_inner = htmlFromStr(
+        this.inner_elem = ui.htmlFromStr(
             `<div class="button-inner"></div>`,
-            this.button
+            this.element
         );
-        this.button_text = htmlFromStr(
+        this.text_elem = ui.htmlFromStr(
             `<div class="button-text">${text}</div>`,
-            this.button_inner
+            this.inner_elem
         );
-        this.onclicks = [];
-        this.button.addEventListener("click", () => this.onClick());
-        this.is_visible = true;
+        this.element.addEventListener("click", () => this.onClick());
+    }
 
-        if (onClickCallback) {
-            this.onclicks.push(onClickCallback);
+    setEnabled(is_enabled = true) {
+        if (is_enabled) {
+            this.enable();
+        }
+        else {
+            this.disable();
         }
     }
 
     enable() {
-        this.button.classList.remove("button-disabled");
+        this.element.classList.remove("button-disabled");
         this.disabled = false;
     }
 
-    setText(text) {
-        this.button_text.textContent = text;
-    }
-
-    setButtonContent(content) {
-        this.button_text.innerHTML = content;
-    }
-
     disable() {
-        this.button.classList.add("button-disabled");
+        this.element.classList.add("button-disabled");
         this.disabled = true;
     }
 
     isEnabled() {
         return !this.disabled;
+    }
+
+    setText(text) {
+        this.text_elem.textContent = text;
+    }
+
+    setContent(content) {
+        this.text_elem.innerHTML = content;
+    }
+
+    getText() {
+        this.text_elem.textContent;
+    }
+
+    setTooltip(text) {
+        if (text === null) {
+            this.element.removeAttribute("tooltip");
+        }
+        else {
+            this.element.setAttribute("tooltip", text);
+        }
+    }
+
+    setTooltipFromArr(arr) {
+        let text = null;
+        if (arr && arr.length > 0) {
+            text = "";
+            for (const it of arr) {
+                text += it + "\n";
+            }
+        }
+        this.setTooltip(text);
+    }
+
+    addOnClick(func) {
+        this.onclicks.push(func);
+    }
+
+    isVisible() {
+        return ui.isVisible(this.element);
+    }
+
+    setVisible(is_visible = true) {
+        ui.setVisible(this.element, is_visible);
     }
 
     onClick() {
@@ -61,68 +101,26 @@ export class SimpleButton {
             }
         }
     }
-
-    setTooltipText(text) {
-        this.button.setAttribute("tooltip", text);
-    }
-
-    setTooltip(values) {
-        if (values === null || values.length === 0) {
-            this.button.removeAttribute("tooltip");
-        }
-        else {
-            let text = "";
-            for (const v of values) {
-                text += `${v}\n`;
-            }
-            this.button.setAttribute("tooltip", text);
-        }
-    }
-
-    addOnClick(func) {
-        this.onclicks.push(func);
-    }
-
-    isVisible() {
-        return isElementVisible(this.button);
-    }
-
-    setVisibility(is_visible) {
-        if (is_visible) {
-            makeVisible(this.button);
-        }
-        else {
-            makeInvisible(this.button);
-        }
-    }
-
-    click() {
-        if (!this.disabled) {
-            this.button.click();
-        }
-    }
 }
 
-export class Button extends SimpleButton {
-    constructor(id, parent, text, timeout_sec, onFinishedCallback, onClickCallback = null) {
-        super(id, parent, text);
-        
-        this.start = 0;
-        this.is_in_cooldown = false;
-        this.setTimeout(timeout_sec);
-        this.cooldown = htmlFromStr(
-            `<div class="button-cooldown" style="width: 0%"></div>`,
-            this.button_inner
-        );
+export class CooldownButton extends Button {
+    constructor(id, parent, text, cooldown, onFinishedCb, onClickCb = null) {
+        super(id, parent, text, onClickCb);
 
-        this.onFinished = () => {
-            onFinishedCallback();
-        }
+        this.is_in_cooldown = false;
+        this.timeout = cooldown * 1000;
+        this.cur_time = 0;
+        this.cooldown = ui.htmlFromStr(
+            `<div class="button-cooldown" style="width: 0%"></div>`,
+            this.inner_elem
+        );
+        this.callback = onFinishedCb;
 
         this.onclicks.push(() => this.startCooldown());
-        if (onClickCallback) {
-            this.onclicks.push(onClickCallback);
-        }
+    }
+
+    setCooldown(cooldown) {
+        this.timeout = cooldown;
     }
 
     enable() {
@@ -132,189 +130,68 @@ export class Button extends SimpleButton {
 
     startCooldown() {
         this.disable();
-        this.start = document.timeline.currentTime;
+        this.cur_time = 0;
         this.is_in_cooldown = true;
-        requestAnimationFrame((t) => this.cooldownStep(t));
     }
-    
-    cooldownStep(timestamp) {
-        const time = timestamp - this.start;
-        const alpha = time / this.timeout;
-        if (alpha >= 1.0) {
-            this.finishCooldown();
-            return;
+
+    endCooldown() {
+        this.is_in_cooldown = false;
+        this.cooldown.removeAttribute("style");
+        this.enable();
+        if (this.callback) {
+            this.callback();
         }
+    }
+
+    tick(dt) {
+        if (!this.is_in_cooldown) return;
+
+        this.cur_time += dt;
+        if (this.cur_time >= this.timeout) {
+            this.endCooldown();
+            return;
+        }   
+
+        const alpha = this.cur_time / this.timeout;
         this.setCooldownBarWidth(alpha);
-        requestAnimationFrame((t) => this.cooldownStep(t));
     }
 
     setCooldownBarWidth(alpha) {
-        const width = lerp(100, 0, alpha);
+        const width = num.lerp(100, 0, alpha);
         this.cooldown.setAttribute("style", `width: ${width}%`);
-    }
-
-    finishCooldown() {
-        this.is_in_cooldown = false;
-        this.cooldown.setAttribute("style", "width: 0%");
-        this.enable();
-        this.onFinished();
-    }
-
-    setTimeout(seconds) {
-        this.timeout = seconds * 1000.0;
-    }
-};
-
-export class ExchangeResButton extends SimpleButton {
-    constructor(get_res, get_count, give_res, give_count, parent) {
-        let text = `Barter for ${get_count} ${Resources.name(get_res)}`;
-
-        super(
-            `exchange-button-${Resources.key(get_res)}`,
-            parent,
-            text,
-            () => {
-                game.inventory.remove(this.give_res, this.give_count);
-                game.inventory.add(this.get_res, this.get_count);
-                this.disable();
-                this.checkCondition()
-            }
-        );
-
-        this.get_res = get_res;
-        this.get_count = get_count;
-        this.give_res = give_res;
-        this.give_count = give_count;
-
-        this.condition = new ResourceCondition({ [this.give_res]: this.give_count });
-        addListener(MessageTypes.resourceUpdate, () => this.checkCondition());
-        this.update();
-        this.checkCondition();
-    }
-
-    updateText() {
-        this.setText(`Barter for ${this.get_count} ${Resources.name(this.get_res)}`);
-    }
-
-    update() {
-        this.setTooltip([
-            formatResource(this.give_res, -this.give_count),
-            formatResource(this.get_res, this.get_count),
-        ]);
-        this.updateText();
-    }
-
-    checkCondition() {
-        if (this.condition.step()) {
-            this.condition.reset();
-            this.enable();
-        }
-        else {
-            this.disable();
-        }
-    }
-}
-
-export class SellButton extends ExchangeResButton {
-    constructor(resource, count, parent) {
-        const value = Resources.get(resource, "value", 0);
-        super(
-            Resources.money, value * count, 
-            resource, count,
-            parent
-        );
-
-        this.value = value;
-        this.value_multiplier = 1;
-        this.updateText();
-    }
-
-    setSellCount(count) {
-        this.give_count = count;
-        this.get_count = (this.value * this.value_multiplier) * count;
-        this.update();
-    }
-
-    setValueMultiplier(mul) {
-        this.value_multiplier = mul;
-        this.get_count = (this.value * this.value_multiplier) * this.give_count;
-        this.update();
-    }
-
-    /* override */
-    updateText() {
-        let text = "Sell ";
-        if (this.give_count === 1) text += "a";
-        else text += this.give_count;
-        text += ` ${Resources.name(this.give_res)}`;
-
-        this.setText(text)
-    }
-}
-
-export class BuyButton extends ExchangeResButton {
-    constructor(resource, count, parent) {
-        const value = Resources.get(resource, "value", 0);
-        super(
-            resource, count,
-            Resources.money, value * count, 
-            parent
-        );
-
-        const res_name = Resources.name(resource);
-
-        let text = "Buy ";
-        if (count === 1) text += "a";
-        else text += count;
-        text += ` ${res_name}`;
-
-        this.setText(text)
     }
 }
 
 export class BuyPinpinButton extends Button {
-    constructor(type, count, parent) {
+    constructor(type, count, resources, parent) {
         const pinpin = PinpinType.fromIndex(type);
         const pin_name = pinpin.name;
 
-        let name = "Buy ";
-        if (count === 1) name += "a";
-        else name += count;
-        name += ` ${pin_name}`;
+        let text = "Barter for ";
+        if (count === 1) text += "a";
+        else text += num.format(count);
+        text += ` ${pinpin.name}`;
 
         super(
             `buy-pinpin-button-${PinpinType.key(type)}`,
             parent,
-            name,
-            0.,
+            text,
             () => {
-                this.checkCondition()
+                game.inventory.removeMultiple(this.cost);
+                game.village.add(type, count);
             }
         );
 
-        this.cost = pinpin.value * count;
-        this.setTooltip([
-            `+${formatNumber(count)} ${pinpin.name}`,
-            formatResource(Resources.money, -this.cost),
-        ]);
-
-        this.cooldown.remove();
-        this.addOnClick(() => {
-            game.inventory.remove(Resources.money, this.cost);
-            game.village.add(type, count);
-            this.disable();
-        });
-        this.condition = new ResourceCondition({ [Resources.money]: this.cost });
-        addListener(MessageTypes.resourceUpdate, () => this.checkCondition());
+        this.cost = resources;
+        
+        let tip = `+${num.format(count)} ${pinpin.name}`;
+        for (const [id, count] of Object.entries(resources)) {
+            tip += `\n-${num.format(count)} ${Resources.name(id)}`;
+        }
+        this.setTooltip(tip)
     }
 
-    checkCondition() {
-        if (this.condition.step()) {
-            this.condition.reset();
-            this.enable();
-        }
-        else {
-            this.disable();
-        }
+    tick(dt) {
+        this.setEnabled(game.inventory.hasEnough(this.cost));
     }
 }

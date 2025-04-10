@@ -1,15 +1,10 @@
-import { randomResources } from "src/utils/rand.js"
-import { makeEnum } from "src/utils/enum.js"
-import { Colours } from "src/log.js"
-import { Resources } from "src/inventory.js"
-import { ResourceCondition } from "src/condition.js"
+import * as enums from "src/utils/enum.js"
+import * as rand from "src/utils/rand.js"
 import { game } from "src/game.js"
-import { sendMsg, MessageTypes } from "src/messages.js"
-import { Timer } from "src/utils/timer.js"
-import { SkillCondition } from "./condition.js"
-import { randomCheck } from "./utils/rand.js"
+import { Resources } from "src/inventory.js";
+import { Colours } from "src/log.js";
 
-export const HouseLevels = makeEnum({
+export const HouseLevels = enums.make({
     none: {
         name: "None",
         tiles: 0,
@@ -18,10 +13,10 @@ export const HouseLevels = makeEnum({
         name: "Tent",
         tiles: 5,
         show: {
-            [Resources.wood]: 10,
+            [Resources.wood]: 5,
         },
         cost: {
-            [Resources.wood]: 50,
+            [Resources.wood]: 20,
         },
         time: 2.0,
     },
@@ -32,7 +27,7 @@ export const HouseLevels = makeEnum({
             [Resources.stone]: 5,
         },
         cost: {
-            [Resources.wood]: 100,
+            [Resources.wood]: 50,
             [Resources.stone]: 20,
         },
         time: 4.0,
@@ -43,18 +38,16 @@ export const HouseLevels = makeEnum({
         show: {
             [Resources.wood]: 1000,
             [Resources.stone]: 500,
-            [Resources.money]: 20,
         },
         cost: {
             [Resources.wood]: 10000,
             [Resources.stone]: 5000,
-            [Resources.money]: 200,
         },
         time: 4.0,
     },
 })
 
-export const TileState = makeEnum({
+export const TileState = enums.make({
     dirt: {
         name: "Prepare",
         time: 10,
@@ -93,228 +86,90 @@ export class GardenTile {
         this.num_multiplier = 1;
         this.speed_multiplier = 1;
         this.replant_chance = 0;
-        this.condition = null;
-        this.listener_id = null;
-        this.timer = null;
-
-        this.on_start_cooldown = null;
-        this.on_step_cooldown = null;
-        this.on_end_cooldown = null;
-    }
-    
-    runState(found = null, is_pinpin = false) {
-        const state = TileState.fromIndex(this.state);
-        if ("cost" in state) {
-            const cost = {};
-            for (let [id, count] of Object.entries(state.cost)) {
-                cost[id] = count * this.num_multiplier;
-            }
-            this.condition = new ResourceCondition(cost);
-        }
-        else {
-            this.condition = null;
-        }
-
-        sendMsg(MessageTypes.gardenUpdate, { index: this.index, harvest: is_pinpin ? null : found });
-
-        if ("autorun" in state && state.autorun) {
-            this.tryNext();
-        }
-    }
-
-    startTimer(from = 0, is_pinpin = false) {
-        const state = TileState.fromIndex(this.state);
-
-        this.timer = new Timer(
-            state.time * 1000.0 * this.speed_multiplier, 
-            this.on_step_cooldown,
-            () => {
-                this.timer = null;
-                this.next(is_pinpin);
-                if (this.on_end_cooldown) {
-                    this.on_end_cooldown();
-                }
-            }
-        )
-        this.timer.start(from);
+        
+        this.current_time = 0;
+        this.total_time = 0;
+        this.is_running = false;
     }
 
     check() {
-        if (this.timer && this.timer.is_running) return false;
-        if (!this.condition) return true;
-        let unlocked = this.condition.step();
-        this.condition.reset();
-        return unlocked;
+        if (this.is_running) return false;
+        return game.inventory.hasEnough(TileState.get(this.state, "cost"));
+    }
+
+    start() {
+        const state = TileState.fromIndex(this.state);
+        this.total_time = state.time * 100
+        this.is_running = true;
+        this.current_time = 0;
+        
+        game.inventory.removeMultiple(state.cost);
+    }
+
+    finish() {
+        this.is_running = false;
+        this.state += 1;
+        if (this.state >= TileState.count()) {
+            this.state = 0;
+            this.harvest();
+        }
+        if (TileState.get(this.state, "autorun", false)) {
+            this.start();
+        }
+    }
+
+    tick(dt) {
+        if (!this.is_running) {
+            return;
+        }
+
+        this.current_time += dt;
+        if (this.current_time >= this.total_time) {
+            this.finish();
+        }
+    }
+
+    getAlpha() {
+        return this.is_running ? this.current_time / this.total_time : 1;
+    }
+
+    harvest() {
+        const resources = {
+            [Resources.wheat]: 1 * this.num_multiplier,
+            [Resources.seeds]: 0.1 * this.num_multiplier,
+        };
+        game.inventory.addMultiple(resources);
     }
 
     getPinpinNeeded() {
         return this.num_multiplier;
-    }
-
-    tryNext(is_pinpin = false) {
-        if (!this.check()) return false;
-
-        const state = TileState.fromIndex(this.state);
-
-        if ("cost" in state) {
-            for (const [id, count] of Object.entries(state.cost)) {
-                game.inventory.remove(id, count * this.num_multiplier);
-            }
-        }
-
-        this.startTimer(0, is_pinpin);
-        if (this.on_start_cooldown) {
-            this.on_start_cooldown();
-        }
-        
-        return true;
-    }
-
-    next(is_pinpin = false) {
-        let found = null;
-
-        this.state += 1;
-        if (this.state >= TileState.count()) {
-            this.state = 0;
-            found = this.harvest();
-            if (randomCheck(this.replant_chance)) {
-                this.state = TileState.growing;
-            }
-        }
-
-        this.runState(found, is_pinpin);
-    }
-
-    harvest() {
-        const found = randomResources({
-            [Resources.wheat]: { min: 1, max: 4, atleast: 80 },
-            [Resources.seeds]: { atleast: 90 },
-        });
-        const items = found.getResults();
-        for (const index in items) {
-            items[index].count *= this.num_multiplier;
-            game.inventory.add(items[index].id, items[index].count);
-        }
-        return items;
     }
 }
 
 export class Garden {
     constructor() {
         this.tiles = [];
-        this.house = HouseLevels.none;
+        this.level = HouseLevels.none;
     }
 
-    init() {
-        this.setupConditions();
-    }
-
-    getSaveData() {
-        let data = {
-            level: this.house,
-            tiles: {},
-        };
-        for (const tile of this.tiles) {
-            if (tile.state !== TileState.dirt || (tile.timer && tile.timer.is_running)) {
-                data.tiles[tile.index] = {
-                    state: tile.state,
-                    resource: tile.resource,
-                    num_multiplier: tile.num_multiplier,
-                    speed_multiplier: tile.speed_multiplier,
-                    timer: tile.timer && tile.timer.is_running ? tile.timer.cur_time : 0,
-                }
-            }
+    upgrade(remove_resources = true) {
+        if (this.level + 1 >= HouseLevels.count()) {
+            console.error("trying to upgrade house over max level");
+            return;
         }
-        return data;
-    }
-
-    loadSaveData(data) {
-        // TODO: this gives weird result when reloading from an
-        // already loaded state??
-        this.tiles = [];
-        this.house = HouseLevels.none;
-
-        for (let i = 0; i < data.level; ++i) {
-            this.upgrade();
-        }
-
-        for (const [index, item] of Object.entries(data.tiles)) {
-            const tile = this.tiles[index];
-            tile.state = item.state;
-            tile.resource = item.resource;
-            tile.num_multiplier = item.num_multiplier;
-            tile.speed_multiplier = item.speed_multiplier;
-            if (item.timer > 0) {
-                tile.startTimer(item.timer);
-            }
-            tile.runState();
-        }
-
-    }
-
-    upgrade() {
-        if (this.house + 1 >= HouseLevels.count()) {
-            return false;
-        }
-
-        const old_len = HouseLevels.get(this.house, "tiles");
-        this.house += 1;
-        const len = HouseLevels.get(this.house, "tiles");
-
+        
+        const old_len = HouseLevels.get(this.level, "tiles");
+        this.level += 1;
+        const len = HouseLevels.get(this.level, "tiles");
+        
         for (let i = old_len; i < len; ++i) {
             this.tiles.push(new GardenTile(i));
         }
-
-        if (!game.is_loading) {
-            const cost = HouseLevels.fromIndex(this.house).cost;
-            for (const [id, count] of Object.entries(cost)) {
-                game.inventory.remove(id, count);
-            }
-        }
-
-        sendMsg(MessageTypes.houseUpgrade, { level: this.house });
-        return true;
     }
 
-    setupConditions() {
-        new SkillCondition(
-            "garden_tiles",
-            (skill) => {
-                for (const tile of this.tiles) {
-                    tile.num_multiplier = 25;
-                }
-            }
-        );
-        new SkillCondition(
-            "fast_crops",
-            (skill) => {
-                let spd_mul = [
-                    0.95,
-                    0.90,
-                    0.75,
-                    0.50,
-                    0.25,
-                ];
-                spd_mul = spd_mul[skill.upgrade];
-                for (const tile of this.tiles) {
-                    tile.speed_multiplier *= spd_mul;
-                }
-            }
-        )
-        new SkillCondition(
-            "seed_chance",
-            (skill) => {
-                let replant_chance = [
-                    0.05,
-                    0.15,
-                    0.50,
-                    0.75,
-                ];
-                replant_chance = replant_chance[skill.upgrade];
-                for (const tile of this.tiles) {
-                    tile.replant_chance = replant_chance;
-                }
-            }
-        )
+    tick(dt) {
+        for (const tile of this.tiles) {
+            tile.tick(dt);
+        }
     }
 }

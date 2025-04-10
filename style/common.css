@@ -121,13 +121,11 @@ div[tooltip]:hover::after {
 
 /*** Buttons ************************************************/
 
-.button-inner {
-    position: relative;
-    padding: 8px 10px;
-    z-index: 0;
-}
 
 .button {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
     position: relative;
     border: var(--border);
     width: 100px;
@@ -140,6 +138,26 @@ div[tooltip]:hover::after {
     text-decoration: underline;
 }
 
+.button:active {
+    border-color: var(--disabled-col);
+    color: var(--disabled-col);
+}
+
+.button[tooltip]::after {
+    left: 50%;
+    top: 100%;
+}
+
+.button-inner {
+    position: relative;
+    padding: 8px 10px;
+    z-index: 0;
+}
+
+.button-text {
+    position: relative;
+}
+
 .button-disabled {
     border-color: var(--disabled-col);
     color: var(--disabled-col);
@@ -150,6 +168,17 @@ div[tooltip]:hover::after {
     text-decoration: none;
 }
 
+/******************************************/
+
+.button-testtest {
+    position: relative;
+    border: var(--border);
+    width: 100px;
+    text-align: center;
+    cursor: pointer;
+    user-select: none;
+}
+
 .button-cooldown {
     background-color: var(--main-col);
     position: absolute;
@@ -157,26 +186,6 @@ div[tooltip]:hover::after {
     left: 0;
     height: 100%;
     z-index: -1;
-}
-
-.button-text {
-    position: relative;
-}
-
-.simple-button {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-}
-
-.simple-button:active {
-    border-color: var(--disabled-col);
-    color: var(--disabled-col);
-}
-
-.simple-button[tooltip]::after {
-    left: 50%;
-    top: 100%;
 }
 
 /*** Side Bars **********************************************/

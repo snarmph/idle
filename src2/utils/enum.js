@@ -1,4 +1,4 @@
-export function make(object) {
+export function makeEnum(object) {
     class ObjEnum {
         constructor(object) {
             this._list = [];

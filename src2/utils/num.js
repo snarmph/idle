@@ -1,5 +1,5 @@
-// import { Resources } from "src/inventory.js"
-import * as enums from "src/utils/enum.js"
+import { Resources } from "src/inventory.js"
+import { makeEnum } from "src/utils/enum.js"
 
 export function lerp(v0, v1, alpha) {
     return (1 - alpha) * v0 + alpha * v1;
@@ -24,20 +24,13 @@ for (const s of num_suffixes) {
 }
 num_formats_short[10]="Dc";
 
-function formatRaw(num) {
+export function formatRaw(num) {
     if (Number.isInteger(num)) {
         return String(num);
     }
     else {
         return num.toFixed(2);
     }
-}
-
-function formatScientific(num) {
-    if (num < 1000) {
-        return formatRaw(num);
-    }
-    return num.toExponential(2).replace("+", "");
 }
 
 function formatEveryThirdPower(notations) {
@@ -64,7 +57,7 @@ function formatEveryThirdPower(notations) {
 	};
 }
 
-export const NumFormatting = enums.make({
+export const NumFormatting = makeEnum({
     short: {
         name: "Short format",
         func: formatEveryThirdPower(num_formats_short),
@@ -77,28 +70,34 @@ export const NumFormatting = enums.make({
         name: "Raw format",
         func: formatRaw,
     },
-    scientific: {
-        name: "Scientific format",
-        func: formatScientific,
-    }
 })
 
 let num_format_type = NumFormatting.long;
 let num_formatter = NumFormatting.fromIndex(num_format_type);
 
-export function setFormatter(index) {
+export function setNumberFormatter(index) {
     num_format_type = index;
     num_formatter = NumFormatting.fromIndex(num_format_type);
 }
 
-export function getFormatter() {
+export function getNumberFormatter() {
     return num_format_type;
 }
 
-export function format(num) {
+export function formatNumber(num) {
     return num_formatter.func(num);
 }
 
 export function formatCount(num) {
     return (num > 0 ? "+" : "") + formatNumber(num);
+}
+
+export function formatResource(resource, count) {
+    let name = Resources.name(resource);
+    const count_abs = Math.abs(count);
+    if (count_abs >= 1 && count_abs < 2) {
+        const singular = Resources.get(resource, "singular", null);
+        if (singular) name = singular;
+    }
+    return `${formatCount(count)} ${name}`;
 }

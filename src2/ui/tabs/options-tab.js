@@ -1,8 +1,8 @@
 import * as ui from "src/ui/base.js"
-import * as num from "src/utils/num.js"
 import { BaseTab } from "src/ui/tab.js"
 import { game } from "src/game.js"
-import { Button } from "src/ui/button.js"
+import { NumFormatting } from "src/utils/num.js"
+import { SimpleButton } from "src/ui/button.js"
 
 export class OptionsTab extends BaseTab {
     constructor() {
@@ -14,17 +14,16 @@ export class OptionsTab extends BaseTab {
         );
 
         this.addCheckbox("Dark Mode", game.options.dark_mode, () => game.options.toggleDarkMode());
-        this.addSelectBox("Number formatting", num.getFormatter(), num.NumFormatting, (i) => game.options.setFormatter(i));
 
         this.save_elem = ui.htmlFromStr(`<div class="save-btn"></div>`, this.options_elem);
         this.file_elem = ui.htmlFromStr(`<div class="file-btn"></div>`, this.options_elem);
 
         this.buttons = {
-            save:           new Button("save-button", this.save_elem, "Save", () => game.save()),
-            load:           new Button("load-button", this.save_elem, "Load", () => game.load()),
-            save_to_file:   new Button("save-to-file-button", this.file_elem, "Save to file", () => this.saveToFile()),
-            load_from_file: new Button("load-from-file-button", this.file_elem, "Load from file", () => this.loadFromFile()),
-            delete_save:    new Button("delete-save-button", this.options_elem, "Delete save", () => debug.clearSave()),
+            save: new SimpleButton("save-button", this.save_elem, "Save", () => game.save()),
+            load: new SimpleButton("load-button", this.save_elem, "Load", () => game.load()),
+            save_to_file:   new SimpleButton("save-to-file-button", this.file_elem, "Save to file", () => this.saveToFile()),
+            load_from_file: new SimpleButton("load-from-file-button", this.file_elem, "Load from file", () => this.loadFromFile()),
+            delete_save: new SimpleButton("delete-save-button", this.options_elem, "Delete save", () => debug.clearSave()),
         }
     }
 
@@ -56,7 +55,7 @@ export class OptionsTab extends BaseTab {
 
     addCheckbox(name, value, onclick) {
         const container = ui.htmlFromStr(
-            `<div class="item-container">
+            `<div class="forest-item">
                 <div class="item-name">${name}</div>
             </div>`,
             this.options_elem
@@ -74,7 +73,7 @@ export class OptionsTab extends BaseTab {
 
     addSelectBox(name, value, enum_list, onselect) {
         const container = ui.htmlFromStr(
-            `<div class="item-container">
+            `<div class="forest-item">
                 <div class="item-name">${name}</div>
             </div>`,
             this.options_elem
@@ -95,8 +94,10 @@ export class OptionsTab extends BaseTab {
             onselect(select_elem.selectedIndex);
         });
 
+        // for (const [id, fmt] of NumFormatting.each()) {
         for (const [id, item] of enum_list.each()) {
             let selected = "";
+            // if (id === game.options.number_formatting) {
             if (id === value) {
                 selected = "selected";
             }
