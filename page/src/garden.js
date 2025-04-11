@@ -118,7 +118,7 @@ export class GardenTile {
         }
     }
 
-    tick(dt) {
+    logicTick(dt) {
         if (!this.is_running) {
             return;
         }
@@ -167,9 +167,9 @@ export class Garden {
         }
     }
 
-    tick(dt) {
+    logicTick(dt) {
         for (const tile of this.tiles) {
-            tile.tick(dt);
+            tile.logicTick(dt);
         }
     }
 }

@@ -1,4 +1,3 @@
-// import { Resources } from "src/inventory.js"
 import * as enums from "src/utils/enum.js"
 
 export function lerp(v0, v1, alpha) {
@@ -83,7 +82,7 @@ export const NumFormatting = enums.make({
     }
 })
 
-let num_format_type = NumFormatting.long;
+let num_format_type = NumFormatting.short;
 let num_formatter = NumFormatting.fromIndex(num_format_type);
 
 export function setFormatter(index) {

@@ -1,5 +1,6 @@
 import * as ui from "src/ui/base.js"
 import * as rand from "src/utils/rand.js"
+import * as loop from "src/utils/loop.js"
 import { game } from "src/game.js"
 import { Resources } from "src/inventory.js";
 import { BuyPinpinButton  } from "src/ui/button.js";
@@ -31,19 +32,13 @@ export class Seller {
         this.extra.textContent = seller_animation[0];
     }
 
-    passiveTick(dt) {
-        for (let i = 0; i < this.checks.length; ++i) {
-            if (this.checks[i]()) {
-                this.checks[i] = this.checks[this.checks.length - 1];
-                this.checks.pop();
-                --i;
-            }
-        }
+    logicTick(dt) {
+        loop.check(this.checks);
     }
 
-    activeTick(dt) {
+    renderTick(dt) {
         for (const [_, btn] of Object.entries(this.buttons)) {
-            btn.tick(dt);
+            btn.renderTick(dt);
         }
 
         this.cooldown -= dt;
@@ -76,9 +71,9 @@ export class Seller {
                 game.log("A merchant has appeared", Colours.yellow);
                 game.log("He talks of creatures called Pinpins, which can do all sort of things", Colours.yellow);
                 game.log(`"I'll make you a special price", he says`, Colours.yellow);
-                game.log("You don't know if you trust him", Colours.yellow);
+                game.log("You don't know if you can trust him", Colours.yellow);
                 ui.setVisible(this.category.element)
-                this.show();
+                // this.show();
 
                 return true;
             }

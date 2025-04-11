@@ -22,19 +22,6 @@
     gap: 30px;
 }
 
-
-.item-container {
-    position: relative;
-    display: flex;
-    justify-content: space-between;
-}
-
-.item-container[tooltip]::after {
-    position: absolute;
-    max-width: 100%;
-    top: calc(50% + 10px);
-}
-
 #seller {
     flex-direction: column;
     grid-area: seller;

@@ -27,7 +27,7 @@ class TileButton extends CooldownButton {
         this.element.classList.add("garden-tile-button");
     }
 
-    tick(dt) {
+    renderTick(dt) {
         if (this.index >= game.garden.tiles.length) return;
         this.is_in_cooldown = false;
 
@@ -96,18 +96,18 @@ export class GardenTab extends BaseTab {
     }
 
     /* override */ 
-    onPassiveTick(dt) {
-        if (game.garden.level != this.level) {
-            this.onHouseUpgrade();
-        }
+    onLogicTick(dt) {
     }
 
     /* override */ 
-    onActiveTick(dt) {
-        this.updateAnimation(dt);
-        for (const tile of this.tiles) {
-            tile.tick(dt);
+    onRenderTick(dt) {
+        if (game.garden.level != this.level) {
+            this.onHouseUpgrade();
         }
+        for (const tile of this.tiles) {
+            tile.renderTick(dt);
+        }
+        this.updateAnimation(dt);
     }
 
     /* override */ 

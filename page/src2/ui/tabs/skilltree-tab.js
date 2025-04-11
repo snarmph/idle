@@ -119,7 +119,6 @@ export class SkillTreeTab extends BaseTab {
         return this.skills[len - 1];
     }
 
-
     addConnection(x, y, is_vertical, skill) {
         const element = ui.htmlFromStr(
             `<span class="skill-connection" style="grid-column:${x+1};grid-row:${y+1}">

@@ -143,14 +143,18 @@ export class CooldownButton extends Button {
         }
     }
 
-    tick(dt) {
+    logicTick(dt) {
         if (!this.is_in_cooldown) return;
 
         this.cur_time += dt;
         if (this.cur_time >= this.timeout) {
             this.endCooldown();
             return;
-        }   
+        }
+    }
+
+    renderTick(dt) {
+        if (!this.is_in_cooldown) return;
 
         const alpha = this.cur_time / this.timeout;
         this.setCooldownBarWidth(alpha);
@@ -191,7 +195,7 @@ export class BuyPinpinButton extends Button {
         this.setTooltip(tip)
     }
 
-    tick(dt) {
+    renderTick(dt) {
         this.setEnabled(game.inventory.hasEnough(this.cost));
     }
 }

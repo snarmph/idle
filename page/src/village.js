@@ -6,30 +6,45 @@ import { Resources } from "src/inventory.js"
 export const PinpinType = enums.make({
     base: {
         name: "Stupid Pinpin",
-        action_name: "",
-        value: 5,
+        desc: `
+It's loyal, but not the smartest.
+It'll try to do a random action to make you happy.
+`,
         cooldown: 1,
     },
     explorer: {
         name: "Explorer Pinpin",
-        action_name: "explore the wilderness",
-        value: 10,
+        desc: `
+The Marco Polo of pinpins, it loves exploring
+and will gather wood and seeds while it's out.
+`,
+        find: {
+            [Resources.wood]: 1,
+            [Resources.seeds]: 0.1,
+        },
     },
     miner: {
         name: "Miner Pinpin",
-        action_name: "mine",
-        value: 15,
+        desc: `
+Since it was a child, this pinpin has been 
+yearning for the mine. It will gather stone.
+`,
+        find: {
+            [Resources.stone]: 1,
+        },
     },
     farmer: {
         name: "Farmer Pinpin",
-        action_name: "farm",
-        value: 20,
-        cooldown: 2,
+        desc: `
+It has a great green thumb, it will work in
+your garden.
+`,
+        find: {},
     },
     seller: {
         name: "Seller Pinpin",
         action_name: "sell some stuff",
-        value: 25,
+        find: {},
     },
 })
 
@@ -58,7 +73,7 @@ export class Pinpin {
         this.count -= count;
     }
 
-    tick(dt) {
+    logicTick(dt) {
         if (this.count <= 0) return;
         
         if (this.cooldown > 0) {
@@ -76,20 +91,12 @@ export class Pinpin {
     actionBase(dt) {
         let pinpin_type = rand.choose([
             PinpinType.explorer,
-            PinpinType.miner,
-            PinpinType.farmer,
+            // PinpinType.miner,
+            // PinpinType.farmer,
         ]);
 
         const action = this.getActionForType(pinpin_type);
         action(1000);
-    }
-    
-    actionExplorer(dt) {
-        const res = {
-            [Resources.wood]: this.aps * dt * 0.001,
-            [Resources.seeds]: (this.aps * 0.01) * dt * 0.001,
-        }
-        game.inventory.addMultiple(res);
     }
 
     actionSeller(dt) {
@@ -110,21 +117,26 @@ export class Pinpin {
         }
     }
 
-    actionMiner(dt) {
-        const stone_ps = 1.0 * this.aps * 0.001;
-        const stone = stone_ps * dt;
-        console.log(stone);
-        game.inventory.add(Resources.stone, stone);
+    actionFind(dt, type) {
+        const apt = this.getActionPerTick(dt);
+        const find = PinpinType.get(type, "find");
+        for (const [id, count] of Object.entries(find)) {
+            game.inventory.add(id, count * apt);
+        }
     }
 
     getActionForType(type) {
         switch (type) {
-            case PinpinType.explorer: return (dt) => this.actionExplorer(dt);
-            case PinpinType.miner:    return (dt) => this.actionMiner(dt);
+            case PinpinType.explorer: return (dt) => this.actionFind(dt, PinpinType.explorer);
+            case PinpinType.miner:    return (dt) => this.actionFind(dt, PinpinType.miner);
             case PinpinType.farmer:   return (dt) => this.actionFarmer(dt);
             case PinpinType.seller:   return (dt) => this.actionSeller(dt);
             default:                  return (dt) => this.actionBase(dt);
         }
+    }
+
+    getActionPerTick(dt) {
+        return this.aps * dt * 0.001 * this.count;
     }
 }
 
@@ -165,9 +177,30 @@ export class Village {
         return total;
     }
 
-    tick(dt) {
+    hasEnough(pins) {
+        for (const [id, count] of Object.entries(pins)) {
+            if (this.pinpins[id].count < count) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    addMultiple(pins) {
+        for (const [id, count] of Object.entries(pins)) {
+            this.add(id, count);
+        }
+    }
+
+    removeMultiple(pins) {
+        for (const [id, count] of Object.entries(pins)) {
+            this.rem(id, count);
+        }
+    }
+
+    logicTick(dt) {
         for (const pin of this.pinpins) {
-            pin.tick(dt);
+            pin.logicTick(dt);
         }
     }
 }
