@@ -85,9 +85,10 @@ export class Pinpin {
     }
     
     actionExplorer(dt) {
+        const apf = this.getActionsPerFrame(dt);
         const res = {
-            [Resources.wood]: this.aps * dt * 0.001,
-            [Resources.seeds]: (this.aps * 0.01) * dt * 0.001,
+            [Resources.wood]: apf,
+            [Resources.seeds]: apf * 0.01,
         }
         game.inventory.addMultiple(res);
     }
@@ -111,10 +112,12 @@ export class Pinpin {
     }
 
     actionMiner(dt) {
-        const stone_ps = 1.0 * this.aps * 0.001;
-        const stone = stone_ps * dt;
-        console.log(stone);
-        game.inventory.add(Resources.stone, stone);
+        const apf = this.getActionsPerFrame(dt);
+        const res = {
+            [Resources.stone]: apf,
+        }
+
+        game.inventory.addMultiple(res);
     }
 
     getActionForType(type) {
@@ -125,6 +128,10 @@ export class Pinpin {
             case PinpinType.seller:   return (dt) => this.actionSeller(dt);
             default:                  return (dt) => this.actionBase(dt);
         }
+    }
+
+    getActionsPerFrame(dt) {
+        return this.aps * dt * 0.001 * this.count;
     }
 }
 
