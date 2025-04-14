@@ -75,3 +75,16 @@ TODO
 [ ] more automatic at the beginning
 
 == skills ========================
+
+forest
+ - exotic
+ - rich
+   - generous
+castle
+ - big garden
+ - ferilizer
+   - lucky seed
+pinpins
+ - base breeding
+   - special breeding
+     - genes
