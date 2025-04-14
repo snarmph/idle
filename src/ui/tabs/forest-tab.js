@@ -1,9 +1,10 @@
 import * as ui from "src/ui/base.js"
+import * as num from "src/utils/num.js"
+import * as rand from "src/utils/rand.js"
+import * as loop from "src/utils/loop.js"
 import { BaseTab } from "src/ui/tab.js"
 import { game } from "src/game.js"
 import { Button, CooldownButton } from "src/ui/button.js"
-import * as num from "src/utils/num.js"
-import * as rand from "src/utils/rand.js"
 import { Resources } from "src/inventory.js"
 import { HouseLevels } from "src/garden.js"
 import { PinpinType } from "src/village.js"
@@ -22,59 +23,6 @@ export class ForestTab extends BaseTab {
             `<div class="forest-make-buttons"></div>`,
             this.content_element
         );
-
-        this.categories = {
-            resources: document.getElementById("resources-category"), 
-            pinpins:   document.getElementById("pinpins-category"), 
-        }
-
-        for (const [_, cat] of Object.entries(this.categories)) {
-            ui.setVisible(cat, false);
-        }
-
-        this.res_data = [];
-        this.res_data.length = Resources.count();
-        for (const [id, res] of Resources.each()) {
-            const container = ui.htmlFromStr(
-                `<div id="resource-${id}" class="item-container">
-                    <div class="item-name">${res.name}</div>
-                </div>`, 
-                this.categories.resources
-            );
-            const count = ui.htmlFromStr(
-                `<div class="item-quantity">0</div>`, 
-                container
-            );
-
-            this.res_data[id] = {
-                container: container,
-                count: count,
-            };
-            ui.setVisible(container, false);
-        }
-
-        this.pinpins_data = [];
-        this.pinpins_data.length = PinpinType.count();
-        for (const [id, pin] of PinpinType.each()) {
-            const container = ui.htmlFromStr(
-                `
-                <div id="pinpin-${id}" class="item-container">
-                    <div class="item-name">${pin.name}</div>
-                </div>
-                `, 
-                this.categories.pinpins
-            );
-            const count = ui.htmlFromStr(
-                `<div class="item-quantity">0</div>`, 
-                container
-            );
-
-            this.pinpins_data[id] = {
-                container: container,
-                count: count,
-            };
-            ui.setVisible(container, false);
-        }
 
         this.do_buttons = {
             explore: new CooldownButton(
@@ -180,20 +128,6 @@ export class ForestTab extends BaseTab {
 
         this.checks = [
             () => {
-                if (game.inventory.count() === 0) {
-                    return false;
-                }
-                ui.setVisible(this.categories.resources);
-                return true;
-            },
-            () => {
-                if (game.village.count() === 0) {
-                    return false;
-                }
-                ui.setVisible(this.categories.pinpins);
-                return true;
-            },
-            () => {
                 if (game.garden.level === 0) {
                     return false;
                 }
@@ -231,14 +165,31 @@ export class ForestTab extends BaseTab {
     }
 
     /* override */ 
-    onActiveTick(dt) {
-        this.seller.activeTick(dt);
+    onLogicTick(dt) {
+        this.seller.logicTick(dt);
+        
+        for (const [_, btn] of Object.entries(this.do_buttons)) {
+            btn.logicTick(dt);
+        }
+
+        for (const [_, btn] of Object.entries(this.make_buttons)) {
+            btn.logicTick(dt);
+        }
+    }
+
+    /* override */ 
+    onRenderTick(dt) {
+        this.seller.renderTick(dt);
         if (this.seller.visible) {
             ui.setVisible(this.extra.parentElement);
         }
-
+        
         for (const [_, btn] of Object.entries(this.do_buttons)) {
-            btn.tick(dt);
+            btn.renderTick(dt);
+        }
+
+        for (const [_, btn] of Object.entries(this.make_buttons)) {
+            btn.renderTick(dt);
         }
 
         if (this.make_buttons.house_upgrade) {
@@ -246,45 +197,11 @@ export class ForestTab extends BaseTab {
             this.make_buttons.house_upgrade.setEnabled(game.inventory.hasEnough(house_cost));
         }
 
-        for (const [_, btn] of Object.entries(this.make_buttons)) {
-            btn.tick(dt);
-        }
-    }
-
-    /* override */ 
-    onPassiveTick(dt) {
-        this.seller.passiveTick(dt);
-
-        for (let i = 0; i < this.checks.length; ++i) {
-            if (this.checks[i]()) {
-                this.checks[i] = this.checks[this.checks.length - 1];
-                this.checks.pop();
-                --i;
-            }
-        }
-
-        for (const id in game.inventory.resources) {
-            const res = game.inventory.resources[id];
-            const data = this.res_data[id];
-            if (res.total > 0) {
-                ui.setVisible(data.container);
-            }
-            data.count.textContent = num.format(res.count);
-        }
-
-        for (const id in game.village.pinpins) {
-            const pin = game.village.pinpins[id];
-            const data = this.pinpins_data[id];
-            if (pin.total > 0) {
-                ui.setVisible(data.container);
-            }
-            data.count.textContent = num.format(pin.count);
-        }
+        loop.check(this.checks);
     }
     
     /* override */ 
     onExitSelected() {
         ui.setVisible(this.extra.parentElement, false);
     }
-    
 }

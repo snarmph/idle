@@ -1,4 +1,5 @@
 import * as ui from "src/ui/base.js"
+import { game } from "src/game.js"
 
 export class BaseTab {
     constructor(id, name) {
@@ -50,8 +51,8 @@ export class BaseTab {
     /* virtual */ onInit() {}
     /* virtual */ onVisible() {}
     /* virtual */ onSelected() {}
-    /* virtual */ onActiveTick(dt) {}
-    /* virtual */ onPassiveTick(dt) {}
+    /* virtual */ onLogicTick(dt) {}
+    /* virtual */ onRenderTick(dt) {}
     /* virtual */ onExitSelected() {}
 }
 
@@ -88,6 +89,7 @@ export class TabManager {
         this.active = this.tabs[id];
         this.active.setActive();
         this.active.onSelected();
+        this.active.onRenderTick(game.render.dt);
     }
 
     show(tab_or_id) {
@@ -98,17 +100,20 @@ export class TabManager {
         this.tabs[id].show();
     }
 
-    tick(dt) {
+    logicTick(dt) {
         for (const [_, tab] of Object.entries(this.tabs)) {
-            tab.onPassiveTick(dt);
+            tab.onLogicTick(dt);
         }
-        this.active.onActiveTick(dt);
+    }
+
+    renderTick(dt) {
+        this.active.onRenderTick(dt);
     }
 
     onClick(elem) {
         if (this.active.tab_elem === elem.target) {
             return;
         }
-        this.setActive(elem.target.id.slice(4)); // remove tab-
+        this.setActive(elem.target.id.slice(4)); // remove "tab-"
     }
 }
